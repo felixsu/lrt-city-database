@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# stale/unused: this project generates the Prisma client into node_modules
+/src/generated
