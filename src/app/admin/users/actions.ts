@@ -3,10 +3,11 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
+import { Prisma, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { uploadCompressedImage, deleteImage } from "@/lib/cloudinary";
+import { UNIT_TYPES, type UnitType } from "@/lib/user-enums";
 
 export type UserFormState = { error: string | null };
 
@@ -24,14 +25,23 @@ function parseDate(value: FormDataEntryValue | null): Date | null {
   return str ? new Date(str) : null;
 }
 
-async function uploadPhotoIfPresent(formData: FormData) {
-  const file = formData.get("photo");
+function parseUnitType(value: FormDataEntryValue | null): UnitType | null {
+  const str = String(value ?? "");
+  return (UNIT_TYPES as readonly string[]).includes(str) ? (str as UnitType) : null;
+}
+
+function parsePaymentStatus(value: FormDataEntryValue | null): PaymentStatus {
+  return String(value ?? "") === "PAID_OFF" ? PaymentStatus.PAID_OFF : PaymentStatus.IN_PROGRESS;
+}
+
+async function uploadPhotoIfPresent(formData: FormData, field: string, folder: string) {
+  const file = formData.get(field);
   if (!(file instanceof File) || file.size === 0) return null;
 
   const arrayBuffer = await file.arrayBuffer();
   const base64 = Buffer.from(arrayBuffer).toString("base64");
   const dataUri = `data:${file.type};base64,${base64}`;
-  return uploadCompressedImage(dataUri, "lrt-city-tebet/ppjb");
+  return uploadCompressedImage(dataUri, folder);
 }
 
 export async function createUser(
@@ -43,9 +53,12 @@ export async function createUser(
   const name = String(formData.get("name") ?? "").trim();
   const contactNumber = String(formData.get("contactNumber") ?? "").trim();
   const buildingId = String(formData.get("buildingId") ?? "") || null;
+  const loanBankId = String(formData.get("loanBankId") ?? "") || null;
   const remarks = String(formData.get("remarks") ?? "").trim() || null;
-  const buyDate = parseDate(formData.get("buyDate"));
-  const joinDate = parseDate(formData.get("joinDate"));
+  const unitType = parseUnitType(formData.get("unitType"));
+  const paymentStatus = parsePaymentStatus(formData.get("paymentStatus"));
+  const paidOffDate =
+    paymentStatus === PaymentStatus.PAID_OFF ? parseDate(formData.get("paidOffDate")) : null;
 
   if (!name || !contactNumber) return { error: "Name and contact number are required." };
 
@@ -63,7 +76,17 @@ export async function createUser(
   let user;
   try {
     user = await prisma.user.create({
-      data: { name, unitNumber, contactNumber, buildingId, remarks, buyDate, joinDate },
+      data: {
+        name,
+        unitNumber,
+        unitType,
+        contactNumber,
+        buildingId,
+        loanBankId,
+        paymentStatus,
+        paidOffDate,
+        remarks,
+      },
     });
   } catch (err) {
     if (isUniqueConstraintError(err)) {
@@ -87,9 +110,12 @@ export async function updateUser(
   const name = String(formData.get("name") ?? "").trim();
   const contactNumber = String(formData.get("contactNumber") ?? "").trim();
   const buildingId = String(formData.get("buildingId") ?? "") || null;
+  const loanBankId = String(formData.get("loanBankId") ?? "") || null;
   const remarks = String(formData.get("remarks") ?? "").trim() || null;
-  const buyDate = parseDate(formData.get("buyDate"));
-  const joinDate = parseDate(formData.get("joinDate"));
+  const unitType = parseUnitType(formData.get("unitType"));
+  const paymentStatus = parsePaymentStatus(formData.get("paymentStatus"));
+  const paidOffDate =
+    paymentStatus === PaymentStatus.PAID_OFF ? parseDate(formData.get("paidOffDate")) : null;
 
   if (!id || !name || !contactNumber) return { error: "Name and contact number are required." };
 
@@ -107,7 +133,17 @@ export async function updateUser(
   try {
     await prisma.user.update({
       where: { id },
-      data: { name, unitNumber, contactNumber, buildingId, remarks, buyDate, joinDate },
+      data: {
+        name,
+        unitNumber,
+        unitType,
+        contactNumber,
+        buildingId,
+        loanBankId,
+        paymentStatus,
+        paidOffDate,
+        remarks,
+      },
     });
   } catch (err) {
     if (isUniqueConstraintError(err)) {
@@ -129,12 +165,15 @@ export async function deleteUser(formData: FormData) {
 
   const user = await prisma.user.findUnique({
     where: { id },
-    include: { ppjbs: { include: { photos: true } } },
+    include: { ownershipDocuments: { include: { photos: true } } },
   });
 
   if (user) {
-    for (const ppjb of user.ppjbs) {
-      for (const photo of ppjb.photos) {
+    for (const doc of user.ownershipDocuments) {
+      if (doc.sppuImagePublicId) {
+        await deleteImage(doc.sppuImagePublicId);
+      }
+      for (const photo of doc.photos) {
         await deleteImage(photo.publicId);
       }
     }
@@ -146,7 +185,7 @@ export async function deleteUser(formData: FormData) {
   redirect("/admin/users");
 }
 
-export async function addPpjb(
+export async function createOwnershipDocument(
   _prevState: UserFormState,
   formData: FormData,
 ): Promise<UserFormState> {
@@ -154,21 +193,39 @@ export async function addPpjb(
 
   const userId = String(formData.get("userId") ?? "");
   const accountNumber = String(formData.get("accountNumber") ?? "").trim();
-  if (!userId || !accountNumber) return { error: "PPJB account number is required." };
+  if (!userId || !accountNumber) return { error: "PPJB number is required." };
+
+  const ppjbDate = parseDate(formData.get("ppjbDate"));
+  const sppuNumber = String(formData.get("sppuNumber") ?? "").trim() || null;
+  const sppuDate = parseDate(formData.get("sppuDate"));
 
   let photo: Awaited<ReturnType<typeof uploadPhotoIfPresent>> = null;
-  let photoError: string | null = null;
+  let sppuImage: Awaited<ReturnType<typeof uploadPhotoIfPresent>> = null;
+  let warning: string | null = null;
+
   try {
-    photo = await uploadPhotoIfPresent(formData);
+    photo = await uploadPhotoIfPresent(formData, "photo", "lrt-city-tebet/ownership-documents");
   } catch (err) {
-    console.error("Failed to upload PPJB photo:", err);
-    photoError = "PPJB added, but the photo failed to upload — add it separately below.";
+    console.error("Failed to upload ownership document photo:", err);
+    warning = "Document added, but the photo failed to upload — add it separately below.";
   }
 
-  await prisma.ppjb.create({
+  try {
+    sppuImage = await uploadPhotoIfPresent(formData, "sppuImage", "lrt-city-tebet/sppu");
+  } catch (err) {
+    console.error("Failed to upload SPPU image:", err);
+    warning = "Document added, but the SPPU image failed to upload — try replacing it below.";
+  }
+
+  await prisma.ownershipDocument.create({
     data: {
       userId,
       accountNumber,
+      ppjbDate,
+      sppuNumber,
+      sppuDate,
+      sppuImageUrl: sppuImage?.secure_url,
+      sppuImagePublicId: sppuImage?.public_id,
       photos: photo
         ? {
             create: {
@@ -185,49 +242,104 @@ export async function addPpjb(
 
   revalidatePath("/users");
   revalidatePath(`/admin/users/${userId}`);
-  return { error: photoError };
+  return { error: warning };
 }
 
-export async function deletePpjb(formData: FormData) {
+export async function updateOwnershipDocument(
+  _prevState: UserFormState,
+  formData: FormData,
+): Promise<UserFormState> {
+  await requireAdmin();
+
+  const id = String(formData.get("id") ?? "");
+  const userId = String(formData.get("userId") ?? "");
+  const accountNumber = String(formData.get("accountNumber") ?? "").trim();
+  if (!id || !accountNumber) return { error: "PPJB number is required." };
+
+  const ppjbDate = parseDate(formData.get("ppjbDate"));
+  const sppuNumber = String(formData.get("sppuNumber") ?? "").trim() || null;
+  const sppuDate = parseDate(formData.get("sppuDate"));
+
+  const existing = await prisma.ownershipDocument.findUnique({ where: { id } });
+  if (!existing) return { error: "Ownership document not found." };
+
+  let sppuImage: Awaited<ReturnType<typeof uploadPhotoIfPresent>> = null;
+  let warning: string | null = null;
+  try {
+    sppuImage = await uploadPhotoIfPresent(formData, "sppuImage", "lrt-city-tebet/sppu");
+  } catch (err) {
+    console.error("Failed to upload SPPU image:", err);
+    warning = "Saved, but the new SPPU image failed to upload — try again.";
+  }
+
+  if (sppuImage && existing.sppuImagePublicId) {
+    await deleteImage(existing.sppuImagePublicId);
+  }
+
+  await prisma.ownershipDocument.update({
+    where: { id },
+    data: {
+      accountNumber,
+      ppjbDate,
+      sppuNumber,
+      sppuDate,
+      ...(sppuImage
+        ? { sppuImageUrl: sppuImage.secure_url, sppuImagePublicId: sppuImage.public_id }
+        : {}),
+    },
+  });
+
+  revalidatePath("/users");
+  if (userId) revalidatePath(`/admin/users/${userId}`);
+  return { error: warning };
+}
+
+export async function deleteOwnershipDocument(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
   const userId = String(formData.get("userId") ?? "");
   if (!id) return;
 
-  const ppjb = await prisma.ppjb.findUnique({ where: { id }, include: { photos: true } });
-  if (ppjb) {
-    for (const photo of ppjb.photos) {
+  const doc = await prisma.ownershipDocument.findUnique({
+    where: { id },
+    include: { photos: true },
+  });
+  if (doc) {
+    if (doc.sppuImagePublicId) {
+      await deleteImage(doc.sppuImagePublicId);
+    }
+    for (const photo of doc.photos) {
       await deleteImage(photo.publicId);
     }
-    await prisma.ppjb.delete({ where: { id } });
+    await prisma.ownershipDocument.delete({ where: { id } });
   }
 
   revalidatePath("/users");
   if (userId) revalidatePath(`/admin/users/${userId}`);
 }
 
-export async function addPpjbPhoto(
+export async function addOwnershipDocumentPhoto(
   _prevState: UserFormState,
   formData: FormData,
 ): Promise<UserFormState> {
   await requireAdmin();
 
-  const ppjbId = String(formData.get("ppjbId") ?? "");
+  const ownershipDocumentId = String(formData.get("ownershipDocumentId") ?? "");
   const userId = String(formData.get("userId") ?? "");
-  if (!ppjbId) return { error: "Missing PPJB reference." };
+  if (!ownershipDocumentId) return { error: "Missing ownership document reference." };
 
   let photo: Awaited<ReturnType<typeof uploadPhotoIfPresent>>;
   try {
-    photo = await uploadPhotoIfPresent(formData);
+    photo = await uploadPhotoIfPresent(formData, "photo", "lrt-city-tebet/ownership-documents");
   } catch (err) {
-    console.error("Failed to upload PPJB photo:", err);
+    console.error("Failed to upload ownership document photo:", err);
     return { error: "Photo upload failed. Please try again with a smaller image." };
   }
   if (!photo) return { error: "Choose a photo to upload." };
 
-  await prisma.ppjbPhoto.create({
+  await prisma.ownershipDocumentPhoto.create({
     data: {
-      ppjbId,
+      ownershipDocumentId,
       url: photo.secure_url,
       publicId: photo.public_id,
       bytes: photo.bytes,
@@ -241,16 +353,16 @@ export async function addPpjbPhoto(
   return { error: null };
 }
 
-export async function deletePpjbPhoto(formData: FormData) {
+export async function deleteOwnershipDocumentPhoto(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
   const userId = String(formData.get("userId") ?? "");
   if (!id) return;
 
-  const photo = await prisma.ppjbPhoto.findUnique({ where: { id } });
+  const photo = await prisma.ownershipDocumentPhoto.findUnique({ where: { id } });
   if (photo) {
     await deleteImage(photo.publicId);
-    await prisma.ppjbPhoto.delete({ where: { id } });
+    await prisma.ownershipDocumentPhoto.delete({ where: { id } });
   }
 
   revalidatePath("/users");

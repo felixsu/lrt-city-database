@@ -4,15 +4,7 @@ import { Lock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { maskContactNumber, maskName } from "@/lib/mask";
 import { PublicShell } from "@/components/public-shell";
-
-function formatDate(date: Date | null) {
-  if (!date) return "—";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
-}
+import { UNIT_TYPE_LABELS, type UnitType } from "@/lib/user-enums";
 
 export default async function UsersPage({
   searchParams,
@@ -27,7 +19,7 @@ export default async function UsersPage({
       where: activeBuilding !== "all" ? { buildingId: activeBuilding } : undefined,
       include: {
         building: true,
-        ppjbs: { include: { photos: true }, orderBy: { createdAt: "asc" } },
+        ownershipDocuments: { include: { photos: true }, orderBy: { createdAt: "asc" } },
       },
       orderBy: [{ building: { name: "asc" } }, { name: "asc" }],
     }),
@@ -122,26 +114,26 @@ export default async function UsersPage({
                   </div>
                   <div>
                     <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
-                      Joined / purchased
+                      Unit type
                     </div>
                     <div className="font-mono text-sm text-ink">
-                      {formatDate(user.joinDate)} · {formatDate(user.buyDate)}
+                      {user.unitType ? UNIT_TYPE_LABELS[user.unitType as UnitType] : "—"}
                     </div>
                   </div>
                   <div>
                     <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
-                      PPJB accounts
+                      Ownership documents
                     </div>
-                    {user.ppjbs.length === 0 ? (
+                    {user.ownershipDocuments.length === 0 ? (
                       <div className="text-sm text-muted">—</div>
                     ) : (
                       <div className="flex flex-col gap-1.5">
-                        {user.ppjbs.map((ppjb) => (
-                          <div key={ppjb.id} className="flex items-center gap-2">
+                        {user.ownershipDocuments.map((doc) => (
+                          <div key={doc.id} className="flex items-center gap-2">
                             <span className="rounded-md border border-hairline bg-surface-soft px-2 py-0.5 font-mono text-xs text-ink">
-                              {ppjb.accountNumber}
+                              {doc.accountNumber}
                             </span>
-                            {ppjb.photos.slice(0, 2).map((photo) => (
+                            {doc.photos.slice(0, 2).map((photo) => (
                               <div
                                 key={photo.id}
                                 className="relative h-[18px] w-[18px] overflow-hidden rounded-sm border border-hairline"

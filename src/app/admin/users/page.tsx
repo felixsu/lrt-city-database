@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { LinkButton } from "@/components/ui/button";
+import { UNIT_TYPE_LABELS, PAYMENT_STATUS_LABELS, type UnitType } from "@/lib/user-enums";
 
 function formatDate(date: Date | null) {
   if (!date) return "—";
@@ -32,7 +33,11 @@ export default async function AdminUsersPage({
             }
           : {}),
       },
-      include: { building: true, _count: { select: { ppjbs: true } } },
+      include: {
+        building: true,
+        loanBank: true,
+        _count: { select: { ownershipDocuments: true } },
+      },
       orderBy: { createdAt: "desc" },
     }),
     prisma.building.findMany({ orderBy: { name: "asc" } }),
@@ -44,7 +49,7 @@ export default async function AdminUsersPage({
         <div>
           <h1 className="text-[26px]">Users</h1>
           <p className="mt-1 text-sm text-muted">
-            Manage customer records, PPJB accounts, and photos.
+            Manage customer records, ownership documents, and photos.
           </p>
         </div>
         <LinkButton href="/admin/users/new" variant="primary">
@@ -86,18 +91,19 @@ export default async function AdminUsersPage({
             <tr>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Unit</th>
+              <th className="px-4 py-3">Unit type</th>
               <th className="px-4 py-3">Building</th>
               <th className="px-4 py-3">Contact</th>
-              <th className="px-4 py-3">Join date</th>
-              <th className="px-4 py-3">Purchase date</th>
-              <th className="px-4 py-3">PPJBs</th>
+              <th className="px-4 py-3">Loan bank</th>
+              <th className="px-4 py-3">Payment status</th>
+              <th className="px-4 py-3">Ownership docs</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-hairline-soft">
             {users.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-muted">
+                <td colSpan={9} className="px-4 py-6 text-center text-muted">
                   No users match.
                 </td>
               </tr>
@@ -108,15 +114,23 @@ export default async function AdminUsersPage({
                   <td className="px-4 py-3.5 font-mono text-xs text-ink">
                     {user.unitNumber ?? "—"}
                   </td>
+                  <td className="px-4 py-3.5 text-ink">
+                    {user.unitType ? UNIT_TYPE_LABELS[user.unitType as UnitType] : "—"}
+                  </td>
                   <td className="px-4 py-3.5 text-ink">{user.building?.name ?? "—"}</td>
                   <td className="px-4 py-3.5 font-mono text-xs text-ink">{user.contactNumber}</td>
-                  <td className="px-4 py-3.5 font-mono text-xs text-ink">
-                    {formatDate(user.joinDate)}
+                  <td className="px-4 py-3.5 text-ink">{user.loanBank?.name ?? "—"}</td>
+                  <td className="px-4 py-3.5 text-ink">
+                    {PAYMENT_STATUS_LABELS[user.paymentStatus]}
+                    {user.paymentStatus === "PAID_OFF" && user.paidOffDate && (
+                      <span className="ml-1 font-mono text-xs text-muted">
+                        ({formatDate(user.paidOffDate)})
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3.5 font-mono text-xs text-ink">
-                    {formatDate(user.buyDate)}
+                    {user._count.ownershipDocuments}
                   </td>
-                  <td className="px-4 py-3.5 font-mono text-xs text-ink">{user._count.ppjbs}</td>
                   <td className="px-4 py-3.5 text-right">
                     <a
                       href={`/admin/users/${user.id}`}
