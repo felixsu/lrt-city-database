@@ -1,63 +1,124 @@
-import Link from "next/link";
+import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
+import { LinkButton } from "@/components/ui/button";
 
-export default async function AdminUsersPage() {
+function formatDate(date: Date | null) {
+  if (!date) return "—";
+  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(
+    date,
+  );
+}
+
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; building?: string }>;
+}) {
   await requireAdmin();
-  const users = await prisma.user.findMany({
-    include: { building: true, _count: { select: { ppjbs: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+  const { q, building } = await searchParams;
+
+  const [users, buildings] = await Promise.all([
+    prisma.user.findMany({
+      where: {
+        ...(building && building !== "all" ? { buildingId: building } : {}),
+        ...(q
+          ? {
+              OR: [
+                { name: { contains: q, mode: "insensitive" } },
+                { contactNumber: { contains: q, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+      },
+      include: { building: true, _count: { select: { ppjbs: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.building.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <h1 className="text-[26px]">Users</h1>
+          <p className="mt-1 text-sm text-muted">
             Manage customer records, PPJB accounts, and photos.
           </p>
         </div>
-        <Link
-          href="/admin/users/new"
-          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 dark:bg-white dark:text-neutral-900"
-        >
-          Add user
-        </Link>
+        <LinkButton href="/admin/users/new" variant="primary">
+          <Plus className="h-4 w-4" /> Add resident
+        </LinkButton>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+      <form className="flex flex-wrap gap-2.5" method="GET">
+        <input
+          type="text"
+          name="q"
+          defaultValue={q}
+          placeholder="Search residents…"
+          className="h-[38px] w-64 rounded-lg border border-hairline bg-surface px-3.5 text-sm outline-none focus:border-accent"
+        />
+        <select
+          name="building"
+          defaultValue={building ?? "all"}
+          className="h-[38px] rounded-lg border border-hairline bg-surface px-3 text-sm"
+        >
+          <option value="all">All buildings</option>
+          {buildings.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.name}
+            </option>
+          ))}
+        </select>
+        <button
+          type="submit"
+          className="h-[38px] rounded-lg border border-hairline bg-surface px-4 text-sm hover:bg-surface-soft"
+        >
+          Filter
+        </button>
+      </form>
+
+      <div className="overflow-x-auto rounded-xl border border-hairline bg-surface">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-neutral-200 text-xs uppercase text-neutral-500 dark:border-neutral-800">
+          <thead className="bg-surface-soft text-xs font-medium text-muted">
             <tr>
               <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Contact</th>
               <th className="px-4 py-3">Building</th>
-              <th className="px-4 py-3">PPJB count</th>
+              <th className="px-4 py-3">Contact</th>
+              <th className="px-4 py-3">Join date</th>
+              <th className="px-4 py-3">Purchase date</th>
+              <th className="px-4 py-3">PPJBs</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+          <tbody className="divide-y divide-hairline-soft">
             {users.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-neutral-500">
-                  No users yet.
+                <td colSpan={7} className="px-4 py-6 text-center text-muted">
+                  No users match.
                 </td>
               </tr>
             ) : (
               users.map((user) => (
                 <tr key={user.id}>
-                  <td className="px-4 py-3 font-medium">{user.name}</td>
-                  <td className="px-4 py-3">{user.contactNumber}</td>
-                  <td className="px-4 py-3">{user.building?.name ?? "—"}</td>
-                  <td className="px-4 py-3">{user._count.ppjbs}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
+                  <td className="px-4 py-3.5 font-medium text-ink">{user.name}</td>
+                  <td className="px-4 py-3.5 text-ink">{user.building?.name ?? "—"}</td>
+                  <td className="px-4 py-3.5 font-mono text-xs text-ink">{user.contactNumber}</td>
+                  <td className="px-4 py-3.5 font-mono text-xs text-ink">
+                    {formatDate(user.joinDate)}
+                  </td>
+                  <td className="px-4 py-3.5 font-mono text-xs text-ink">
+                    {formatDate(user.buyDate)}
+                  </td>
+                  <td className="px-4 py-3.5 font-mono text-xs text-ink">{user._count.ppjbs}</td>
+                  <td className="px-4 py-3.5 text-right">
+                    <a
                       href={`/admin/users/${user.id}`}
-                      className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-900"
+                      className="rounded-lg border border-hairline px-3 py-1.5 text-xs hover:bg-surface-soft"
                     >
                       Manage
-                    </Link>
+                    </a>
                   </td>
                 </tr>
               ))

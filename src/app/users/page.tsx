@@ -1,6 +1,9 @@
 import Image from "next/image";
+import Link from "next/link";
+import { Lock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { maskContactNumber, maskName } from "@/lib/mask";
+import { PublicShell } from "@/components/public-shell";
 
 function formatDate(date: Date | null) {
   if (!date) return "—";
@@ -11,101 +14,152 @@ function formatDate(date: Date | null) {
   }).format(date);
 }
 
-export default async function UsersPage() {
-  const users = await prisma.user.findMany({
-    include: {
-      building: true,
-      ppjbs: { include: { photos: true }, orderBy: { createdAt: "asc" } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+export default async function UsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ building?: string }>;
+}) {
+  const { building: buildingFilter } = await searchParams;
+  const activeBuilding = buildingFilter && buildingFilter !== "all" ? buildingFilter : "all";
+
+  const [users, buildings] = await Promise.all([
+    prisma.user.findMany({
+      where: activeBuilding !== "all" ? { buildingId: activeBuilding } : undefined,
+      include: {
+        building: true,
+        ppjbs: { include: { photos: true }, orderBy: { createdAt: "asc" } },
+      },
+      orderBy: [{ building: { name: "asc" } }, { name: "asc" }],
+    }),
+    prisma.building.findMany({ orderBy: { name: "asc" } }),
+  ]);
+
+  const groups: { key: string; name: string; residents: typeof users }[] = [];
+  for (const user of users) {
+    const key = user.buildingId ?? "unassigned";
+    const name = user.building?.name ?? "Unassigned";
+    let group = groups.find((g) => g.key === key);
+    if (!group) {
+      group = { key, name, residents: [] };
+      groups.push(group);
+    }
+    group.residents.push(user);
+  }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Customer records are shown in masked form to protect privacy.
+    <PublicShell>
+      <div className="h-1.5 bg-accent" />
+      <div className="mx-auto max-w-[960px] px-6 py-12 md:px-16">
+        <div className="mb-1.5 flex flex-wrap items-center gap-3">
+          <h1 className="text-[32px]">Resident directory</h1>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface-soft px-2.5 py-1 font-mono text-[11px] text-muted">
+            <Lock className="h-3 w-3" /> masked for privacy
+          </span>
+        </div>
+        <p className="mb-7 text-sm text-muted">
+          Spot-check that a name or unit is genuinely on record. Private details
+          stay redacted here.
         </p>
-      </div>
 
-      {users.length === 0 ? (
-        <p className="text-sm text-neutral-500">No users yet.</p>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {users.map((user) => (
-            <div
-              key={user.id}
-              className="rounded-lg border border-neutral-200 p-5 dark:border-neutral-800"
+        <div className="mb-8 flex flex-wrap gap-2">
+          <Link
+            href="/users"
+            className={`rounded-full border border-accent px-4 py-1.5 text-sm font-medium ${
+              activeBuilding === "all" ? "bg-ink text-white" : "bg-white text-ink"
+            }`}
+          >
+            All
+          </Link>
+          {buildings.map((building) => (
+            <Link
+              key={building.id}
+              href={`/users?building=${building.id}`}
+              className={`rounded-full border border-accent px-4 py-1.5 text-sm font-medium ${
+                activeBuilding === building.id ? "bg-ink text-white" : "bg-white text-ink"
+              }`}
             >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="text-base font-semibold">{maskName(user.name)}</p>
-                  <p className="text-sm text-neutral-500">
-                    {maskContactNumber(user.contactNumber)}
-                  </p>
-                </div>
-                <div className="text-right text-sm">
-                  <p className="font-medium">
-                    {user.building?.name ?? "Unassigned building"}
-                  </p>
-                  <p className="text-neutral-500">
-                    Joined {formatDate(user.joinDate)}
-                  </p>
-                  <p className="text-neutral-500">
-                    Purchased {formatDate(user.buyDate)}
-                  </p>
-                </div>
+              {building.name}
+            </Link>
+          ))}
+        </div>
+
+        {groups.length === 0 ? (
+          <p className="text-sm text-muted">No users yet.</p>
+        ) : (
+          groups.map((group) => (
+            <div key={group.key} className="mb-8">
+              <div className="mb-3.5 flex items-baseline gap-2.5 border-b border-hairline pb-2.5">
+                <h2 className="font-sans text-[17px] font-medium text-ink">{group.name}</h2>
+                <span className="font-mono text-xs text-muted">
+                  {group.residents.length} resident{group.residents.length === 1 ? "" : "s"}
+                </span>
               </div>
 
-              <div className="mt-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-                  PPJB Accounts
-                </p>
-                {user.ppjbs.length === 0 ? (
-                  <p className="mt-1 text-sm text-neutral-500">
-                    No PPJB on record.
-                  </p>
-                ) : (
-                  <div className="mt-2 flex flex-col gap-3">
-                    {user.ppjbs.map((ppjb) => (
-                      <div key={ppjb.id} className="flex flex-wrap items-center gap-3">
-                        <span className="rounded-md bg-neutral-100 px-2 py-1 text-sm font-mono dark:bg-neutral-900">
-                          {ppjb.accountNumber}
-                        </span>
-                        {ppjb.photos.map((photo) => (
-                          <div
-                            key={photo.id}
-                            className="relative h-14 w-14 overflow-hidden rounded-md bg-neutral-100 dark:bg-neutral-900"
-                          >
-                            <Image
-                              src={photo.url}
-                              alt={`PPJB ${ppjb.accountNumber}`}
-                              fill
-                              className="object-cover"
-                            />
+              {group.residents.map((user) => (
+                <div
+                  key={user.id}
+                  className="grid grid-cols-1 gap-4 border-b border-hairline-soft py-4 sm:grid-cols-[1fr_1fr_1fr_1.4fr_1.4fr]"
+                >
+                  <div>
+                    <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
+                      Name
+                    </div>
+                    <div className="font-mono text-sm text-ink">{maskName(user.name)}</div>
+                  </div>
+                  <div>
+                    <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
+                      Contact
+                    </div>
+                    <div className="font-mono text-sm text-ink">
+                      {maskContactNumber(user.contactNumber)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
+                      Joined / purchased
+                    </div>
+                    <div className="font-mono text-sm text-ink">
+                      {formatDate(user.joinDate)} · {formatDate(user.buyDate)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
+                      PPJB accounts
+                    </div>
+                    {user.ppjbs.length === 0 ? (
+                      <div className="text-sm text-muted">—</div>
+                    ) : (
+                      <div className="flex flex-col gap-1.5">
+                        {user.ppjbs.map((ppjb) => (
+                          <div key={ppjb.id} className="flex items-center gap-2">
+                            <span className="rounded-md border border-hairline bg-surface-soft px-2 py-0.5 font-mono text-xs text-ink">
+                              {ppjb.accountNumber}
+                            </span>
+                            {ppjb.photos.slice(0, 2).map((photo) => (
+                              <div
+                                key={photo.id}
+                                className="relative h-[18px] w-[18px] overflow-hidden rounded-sm border border-hairline"
+                              >
+                                <Image src={photo.url} alt="" fill className="object-cover" />
+                              </div>
+                            ))}
                           </div>
                         ))}
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
-              </div>
-
-              {user.remarks && (
-                <div className="mt-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-                    Remarks
-                  </p>
-                  <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-                    {user.remarks}
-                  </p>
+                  <div>
+                    <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
+                      Remarks
+                    </div>
+                    <div className="text-[13px] text-muted">{user.remarks || "—"}</div>
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+          ))
+        )}
+      </div>
+    </PublicShell>
   );
 }

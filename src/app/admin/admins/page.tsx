@@ -1,5 +1,8 @@
+import { X } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
+import { Button } from "@/components/ui/button";
+import { RolePill } from "@/components/ui/pill";
 import { promoteAdmin, removeAdmin } from "./actions";
 
 export default async function AdminAdminsPage() {
@@ -8,57 +11,66 @@ export default async function AdminAdminsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Admins</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Admin accounts sign in with Google. Add an email to grant admin access.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[26px]">Admins</h1>
+          <p className="mt-1 text-sm text-muted">
+            Admin accounts sign in with Google. Add an email to grant admin access.
+          </p>
+        </div>
+        <form action={promoteAdmin} className="flex gap-2">
+          <input
+            type="email"
+            name="email"
+            placeholder="name@example.com"
+            required
+            className="w-56 rounded-lg border border-hairline bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+          />
+          <Button type="submit" variant="primary">
+            Grant access
+          </Button>
+        </form>
       </div>
 
-      <form action={promoteAdmin} className="flex gap-3">
-        <input
-          type="email"
-          name="email"
-          placeholder="name@example.com"
-          required
-          className="w-full max-w-xs rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950"
-        />
-        <button
-          type="submit"
-          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 dark:bg-white dark:text-neutral-900"
-        >
-          Promote to admin
-        </button>
-      </form>
-
-      <div className="flex flex-col divide-y divide-neutral-200 rounded-lg border border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800">
-        {admins.map((admin) => {
-          const isSelf = admin.email === session.user?.email?.toLowerCase();
-          return (
-            <div key={admin.id} className="flex items-center justify-between p-4">
-              <div>
-                <p className="text-sm font-medium">
-                  {admin.email} {isSelf && <span className="text-neutral-500">(you)</span>}
-                </p>
-                <p className="text-xs text-neutral-500">
-                  {admin.role}
-                  {admin.promotedBy ? ` · promoted by ${admin.promotedBy}` : ""}
-                </p>
-              </div>
-              {!isSelf && admins.length > 1 && (
-                <form action={removeAdmin}>
-                  <input type="hidden" name="id" value={admin.id} />
-                  <button
-                    type="submit"
-                    className="rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
-                  >
-                    Remove
-                  </button>
-                </form>
-              )}
-            </div>
-          );
-        })}
+      <div className="overflow-x-auto rounded-xl border border-hairline bg-surface">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-surface-soft text-xs font-medium text-muted">
+            <tr>
+              <th className="px-4 py-3">Email</th>
+              <th className="px-4 py-3">Role</th>
+              <th className="px-4 py-3">Promoted by</th>
+              <th className="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-hairline-soft">
+            {admins.map((admin) => {
+              const isSelf = admin.email === session.user?.email?.toLowerCase();
+              return (
+                <tr key={admin.id}>
+                  <td className="px-4 py-3.5 font-mono text-xs text-ink">
+                    {admin.email} {isSelf && <span className="text-muted">(you)</span>}
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <RolePill role={admin.role} />
+                  </td>
+                  <td className="px-4 py-3.5 font-mono text-xs text-muted">
+                    {admin.promotedBy || "— (bootstrap)"}
+                  </td>
+                  <td className="px-4 py-3.5 text-right">
+                    {!isSelf && admins.length > 1 && (
+                      <form action={removeAdmin}>
+                        <input type="hidden" name="id" value={admin.id} />
+                        <button type="submit" className="text-muted hover:text-red-600" aria-label="Remove admin">
+                          <X className="h-4 w-4" />
+                        </button>
+                      </form>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );

@@ -2,6 +2,9 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { getHomeContent } from "@/lib/home-content";
 import { MarkdownContent } from "@/components/markdown-content";
+import { PublicShell } from "@/components/public-shell";
+import { Card } from "@/components/ui/card";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 
 function hostname(url: string) {
   try {
@@ -9,6 +12,11 @@ function hostname(url: string) {
   } catch {
     return url;
   }
+}
+
+function formatEventDate(date: Date | null) {
+  if (!date) return null;
+  return new Intl.DateTimeFormat("en-GB", { year: "numeric", month: "short" }).format(date);
 }
 
 export default async function HomePage() {
@@ -23,114 +31,114 @@ export default async function HomePage() {
   ]);
 
   return (
-    <div className="flex flex-col gap-16">
-      <section>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          LRT City Tebet Customer
-        </h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Official customer database and community information hub.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-lg font-semibold">About</h2>
-        <div className="mt-3">
-          <MarkdownContent markdown={homeContent.aboutMarkdown} />
+    <PublicShell>
+      <div className="h-1.5 bg-accent" />
+      <div className="bg-ink px-6 py-14 md:px-16">
+        <div className="mx-auto max-w-[1120px]">
+          <SectionEyebrow className="mb-3.5 text-white/70">
+            PPJB Community · Terminus
+          </SectionEyebrow>
+          <h1 className="mb-3.5 text-[40px] leading-[1.1] tracking-[-0.5px] text-white md:text-[52px]">
+            LRT City Tebet Customer
+          </h1>
+          <p className="max-w-[640px] text-[17px] leading-relaxed text-white/85">
+            The customer record and community home for residents and prospective
+            buyers of LRT City Tebet — how to join, where we&apos;ve been, and where
+            we&apos;re headed.
+          </p>
         </div>
-      </section>
+      </div>
 
-      <section>
-        <h2 className="text-lg font-semibold">How to Join</h2>
-        <div className="mt-3">
-          <MarkdownContent markdown={homeContent.howToJoinMarkdown} />
+      <div className="mx-auto max-w-[1120px] px-6 py-14 md:px-16">
+        <div className="mb-16 grid grid-cols-1 gap-8 md:grid-cols-2">
+          <Card className="p-8">
+            <SectionEyebrow className="mb-3">About</SectionEyebrow>
+            <h2 className="mb-4 text-[26px]">A transit-anchored home in Tebet</h2>
+            <MarkdownContent markdown={homeContent.aboutMarkdown} variant="editorial" />
+          </Card>
+          <Card className="p-8">
+            <SectionEyebrow className="mb-3">How to join</SectionEyebrow>
+            <h2 className="mb-4 text-[26px]">Four steps to a PPJB</h2>
+            <MarkdownContent markdown={homeContent.howToJoinMarkdown} variant="steps" />
+          </Card>
         </div>
-      </section>
 
-      <section>
-        <h2 className="text-lg font-semibold">Timeline</h2>
-        {timelineEvents.length === 0 ? (
-          <p className="mt-3 text-sm text-neutral-500">No events yet.</p>
-        ) : (
-          <ol className="mt-6 flex flex-col gap-8 border-l border-neutral-200 pl-6 dark:border-neutral-800">
-            {timelineEvents.map((event) => (
-              <li key={event.id} className="relative">
-                <span className="absolute -left-[1.65rem] top-1.5 h-2.5 w-2.5 rounded-full bg-neutral-900 dark:bg-white" />
-                {event.eventDate && (
-                  <p className="text-xs font-medium text-neutral-500">
-                    {new Intl.DateTimeFormat("en-GB", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    }).format(event.eventDate)}
-                  </p>
-                )}
-                <h3 className="mt-1 text-base font-semibold">{event.title}</h3>
-                {event.pictureUrl && (
-                  <div className="relative mt-3 h-56 w-full max-w-md overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-900">
-                    <Image
-                      src={event.pictureUrl}
-                      alt={event.title}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                )}
-                <p className="mt-3 whitespace-pre-wrap text-sm text-neutral-600 dark:text-neutral-400">
-                  {event.description}
-                </p>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
-
-      <section>
-        <h2 className="text-lg font-semibold">Media</h2>
-        {mediaLinks.length === 0 ? (
-          <p className="mt-3 text-sm text-neutral-500">No media coverage yet.</p>
-        ) : (
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {mediaLinks.map((link) => (
-              <a
-                key={link.id}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col overflow-hidden rounded-lg border border-neutral-200 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
-              >
-                <div className="relative h-40 w-full bg-neutral-100 dark:bg-neutral-900">
-                  {link.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- arbitrary external domains, cannot be whitelisted
-                    <img
-                      src={link.imageUrl}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-neutral-400">
-                      No preview available
+        <div className="mb-16">
+          <h2 className="mb-2 inline-block border-b-2 border-accent pb-1 text-[28px]">
+            Timeline
+          </h2>
+          <p className="mb-8 font-mono text-sm text-muted">
+            Dated milestones on the LRT City Tebet line.
+          </p>
+          {timelineEvents.length === 0 ? (
+            <p className="text-sm text-muted">No events yet.</p>
+          ) : (
+            <div className="relative">
+              <div className="absolute top-[13px] right-0 left-0 h-0.5 bg-accent" />
+              <div className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4">
+                {timelineEvents.map((event) => (
+                  <div key={event.id} className="relative w-[260px] flex-none snap-start">
+                    <div className="mb-3.5 flex items-center gap-2">
+                      <div className="h-3 w-3 flex-none border-2 border-surface bg-ink shadow-[0_0_0_2px_var(--color-accent)]" />
+                      {formatEventDate(event.eventDate) && (
+                        <span className="font-mono text-xs font-medium text-accent-text">
+                          {formatEventDate(event.eventDate)}
+                        </span>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col gap-1 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-                    {hostname(link.url)}
-                  </p>
-                  <p className="text-sm font-semibold">
-                    {link.title || link.url}
-                  </p>
-                  {link.description && (
-                    <p className="line-clamp-3 text-sm text-neutral-600 dark:text-neutral-400">
-                      {link.description}
-                    </p>
-                  )}
-                </div>
-              </a>
-            ))}
-          </div>
-        )}
-      </section>
-    </div>
+                    <Card className="overflow-hidden">
+                      <div className="relative h-[130px] w-full bg-gradient-to-br from-[#ece7de] to-[#e0d8c8]">
+                        {event.pictureUrl && (
+                          <Image src={event.pictureUrl} alt={event.title} fill className="object-cover" />
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="mb-2 text-[15px] font-medium text-ink">{event.title}</h3>
+                        <p className="text-[13px] leading-relaxed text-muted">{event.description}</p>
+                      </div>
+                    </Card>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <h2 className="mb-6 text-[28px]">In the media</h2>
+          {mediaLinks.length === 0 ? (
+            <p className="text-sm text-muted">No media coverage yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {mediaLinks.map((link) => (
+                <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer">
+                  <Card className="flex h-full flex-col overflow-hidden transition-colors hover:border-accent/40">
+                    <div className="relative h-[120px] w-full bg-gradient-to-br from-[#e8f2f1] to-[#d7e9e8]">
+                      {link.imageUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element -- arbitrary external domains, cannot be whitelisted
+                        <img src={link.imageUrl} alt="" className="h-full w-full object-cover" />
+                      )}
+                    </div>
+                    <div className="flex flex-1 flex-col gap-2.5 p-[18px]">
+                      <span className="inline-flex w-fit rounded-full bg-accent/10 px-2.5 py-1 font-mono text-[11px] text-accent-text">
+                        {hostname(link.url)}
+                      </span>
+                      <h3 className="text-[15px] leading-snug font-medium text-ink">
+                        {link.title || link.url}
+                      </h3>
+                      {link.description && (
+                        <p className="line-clamp-2 text-[13px] leading-relaxed text-muted">
+                          {link.description}
+                        </p>
+                      )}
+                    </div>
+                  </Card>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </PublicShell>
   );
 }

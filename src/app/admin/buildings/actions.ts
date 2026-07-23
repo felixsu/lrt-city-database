@@ -14,6 +14,18 @@ export async function addBuilding(formData: FormData) {
   revalidatePath("/admin/users");
 }
 
+export async function updateBuilding(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  if (!id || !name) return;
+
+  await prisma.building.update({ where: { id }, data: { name } });
+  revalidatePath("/admin/buildings");
+  revalidatePath("/admin/users");
+  revalidatePath("/users");
+}
+
 export async function deleteBuilding(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");

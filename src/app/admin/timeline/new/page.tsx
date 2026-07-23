@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/require-admin";
+import { Button } from "@/components/ui/button";
 import { createTimelineEvent } from "../actions";
 import { TimelineEventFormFields } from "../timeline-event-form";
 
@@ -7,16 +8,17 @@ export default async function NewTimelineEventPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Add Timeline Event</h1>
+      <h1 className="text-[26px]">Add milestone</h1>
 
-      <form action={createTimelineEvent} encType="multipart/form-data" className="flex max-w-lg flex-col gap-4">
+      <form
+        action={createTimelineEvent}
+        encType="multipart/form-data"
+        className="flex max-w-lg flex-col gap-4"
+      >
         <TimelineEventFormFields />
-        <button
-          type="submit"
-          className="mt-2 self-start rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 dark:bg-white dark:text-neutral-900"
-        >
+        <Button type="submit" variant="primary" className="mt-2 self-start">
           Create event
-        </button>
+        </Button>
       </form>
     </div>
   );

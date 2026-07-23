@@ -74,6 +74,19 @@ export async function refreshMediaLinkPreview(formData: FormData) {
   revalidatePath("/admin/media");
 }
 
+export async function reorderMediaLinks(orderedIds: string[]) {
+  await requireAdmin();
+
+  await prisma.$transaction(
+    orderedIds.map((id, index) =>
+      prisma.mediaLink.update({ where: { id }, data: { order: index } }),
+    ),
+  );
+
+  revalidatePath("/");
+  revalidatePath("/admin/media");
+}
+
 export async function deleteMediaLink(formData: FormData) {
   await requireAdmin();
 

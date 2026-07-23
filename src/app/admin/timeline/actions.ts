@@ -79,6 +79,19 @@ export async function updateTimelineEvent(formData: FormData) {
   redirect("/admin/timeline");
 }
 
+export async function reorderTimelineEvents(orderedIds: string[]) {
+  await requireAdmin();
+
+  await prisma.$transaction(
+    orderedIds.map((id, index) =>
+      prisma.timelineEvent.update({ where: { id }, data: { order: index } }),
+    ),
+  );
+
+  revalidatePath("/");
+  revalidatePath("/admin/timeline");
+}
+
 export async function deleteTimelineEvent(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");

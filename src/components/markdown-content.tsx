@@ -5,13 +5,25 @@ import remarkGfm from "remark-gfm";
 import { Mermaid } from "./mermaid";
 import type { ComponentPropsWithoutRef } from "react";
 
-export function MarkdownContent({ markdown }: { markdown: string }) {
+export function MarkdownContent({
+  markdown,
+  variant,
+}: {
+  markdown: string;
+  variant?: "steps" | "editorial";
+}) {
   if (!markdown.trim()) {
-    return <p className="text-sm text-neutral-500">No content yet.</p>;
+    return <p className="text-sm text-muted-soft">No content yet.</p>;
   }
 
   return (
-    <div className="prose prose-neutral dark:prose-invert max-w-none">
+    <div
+      className={`prose max-w-none prose-headings:font-serif prose-headings:text-ink prose-p:text-body prose-li:text-body prose-strong:text-ink prose-a:text-link prose-code:text-ink ${
+        variant === "editorial"
+          ? "prose-p:font-serif prose-p:text-[17px] prose-p:leading-[1.7]"
+          : ""
+      }`}
+    >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -35,6 +47,20 @@ export function MarkdownContent({ markdown }: { markdown: string }) {
               </pre>
             );
           },
+          ...(variant === "steps"
+            ? {
+                ol(props: ComponentPropsWithoutRef<"ol">) {
+                  const { children } = props;
+                  return <ol className="steps-list flex flex-col gap-3.5">{children}</ol>;
+                },
+                li(props: ComponentPropsWithoutRef<"li">) {
+                  const { children } = props;
+                  return (
+                    <li className="text-[15px] leading-relaxed text-body">{children}</li>
+                  );
+                },
+              }
+            : {}),
         }}
       >
         {markdown}

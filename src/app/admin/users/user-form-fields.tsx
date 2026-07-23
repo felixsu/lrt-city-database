@@ -4,6 +4,9 @@ function toDateInputValue(date: Date | null | undefined) {
   return date ? date.toISOString().slice(0, 10) : "";
 }
 
+const inputClass =
+  "mt-1 w-full rounded-lg border border-hairline bg-surface px-3 py-2 text-sm outline-none focus:border-accent";
+
 export function UserFormFields({
   buildings,
   defaultValues,
@@ -21,33 +24,33 @@ export function UserFormFields({
   return (
     <>
       <div>
-        <label className="text-sm font-medium">Name</label>
+        <label className="text-sm font-medium text-ink">Name</label>
         <input
           type="text"
           name="name"
           required
           defaultValue={defaultValues?.name}
-          className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950"
+          className={inputClass}
         />
       </div>
 
       <div>
-        <label className="text-sm font-medium">Contact number</label>
+        <label className="text-sm font-medium text-ink">Contact number</label>
         <input
           type="text"
           name="contactNumber"
           required
           defaultValue={defaultValues?.contactNumber}
-          className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950"
+          className={inputClass}
         />
       </div>
 
       <div>
-        <label className="text-sm font-medium">LRT City building</label>
+        <label className="text-sm font-medium text-ink">LRT City building</label>
         <select
           name="buildingId"
           defaultValue={defaultValues?.buildingId ?? ""}
-          className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950"
+          className={inputClass}
         >
           <option value="">Unassigned</option>
           {buildings.map((building) => (
@@ -60,29 +63,29 @@ export function UserFormFields({
 
       <div className="flex gap-4">
         <div>
-          <label className="text-sm font-medium">Buy date</label>
+          <label className="text-sm font-medium text-ink">Buy date</label>
           <input
             type="date"
             name="buyDate"
             defaultValue={toDateInputValue(defaultValues?.buyDate)}
-            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950"
+            className={inputClass}
           />
         </div>
         <div>
-          <label className="text-sm font-medium">Join date</label>
+          <label className="text-sm font-medium text-ink">Join date</label>
           <input
             type="date"
             name="joinDate"
             defaultValue={toDateInputValue(defaultValues?.joinDate)}
-            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950"
+            className={inputClass}
           />
         </div>
       </div>
 
       <div>
-        <label className="text-sm font-medium">
+        <label className="text-sm font-medium text-ink">
           Remarks{" "}
-          <span className="font-normal text-neutral-500">
+          <span className="font-normal text-muted">
             (e.g. reason PPJB could not be provided)
           </span>
         </label>
@@ -90,7 +93,7 @@ export function UserFormFields({
           name="remarks"
           rows={3}
           defaultValue={defaultValues?.remarks ?? ""}
-          className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950"
+          className={inputClass}
         />
       </div>
     </>

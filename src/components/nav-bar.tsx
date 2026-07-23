@@ -6,21 +6,21 @@ export async function NavBar() {
   const isAdmin = session?.user?.isAdmin;
 
   return (
-    <header className="border-b border-neutral-200 dark:border-neutral-800">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-        <Link href="/" className="text-sm font-semibold tracking-tight">
-          LRT City Tebet Customer
+    <header className="bg-ink text-white">
+      <div className="mx-auto flex max-w-[1120px] items-center justify-between px-6 py-4 md:px-8">
+        <Link href="/" className="font-serif text-lg text-white">
+          LRT City <span className="text-accent">●</span>
         </Link>
 
-        <nav className="flex items-center gap-6 text-sm">
-          <Link href="/" className="hover:underline">
+        <nav className="flex items-center gap-6 font-mono text-[13px]">
+          <Link href="/" className="text-white/70 transition-colors hover:text-white">
             Home
           </Link>
-          <Link href="/users" className="hover:underline">
+          <Link href="/users" className="text-white/70 transition-colors hover:text-white">
             Users
           </Link>
           {isAdmin && (
-            <Link href="/admin" className="hover:underline">
+            <Link href="/admin" className="text-white/70 transition-colors hover:text-white">
               Administrative
             </Link>
           )}
@@ -34,9 +34,9 @@ export async function NavBar() {
             >
               <button
                 type="submit"
-                className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-900"
+                className="rounded-full border border-white/20 px-3 py-1.5 text-[12px] text-white/80 hover:bg-white/10 hover:text-white"
               >
-                Sign out ({session?.user?.email})
+                Sign out
               </button>
             </form>
           ) : (
@@ -48,7 +48,7 @@ export async function NavBar() {
             >
               <button
                 type="submit"
-                className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-900"
+                className="rounded-full border border-white/20 px-3 py-1.5 text-[12px] text-white/80 hover:bg-white/10 hover:text-white"
               >
                 Admin sign in
               </button>

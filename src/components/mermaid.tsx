@@ -33,7 +33,7 @@ export function Mermaid({ chart }: { chart: string }) {
 
   if (error) {
     return (
-      <pre className="overflow-x-auto rounded-md bg-red-50 p-4 text-xs text-red-700 dark:bg-red-950 dark:text-red-300">
+      <pre className="overflow-x-auto rounded-md bg-red-50 p-4 text-xs text-red-700">
         Failed to render mermaid diagram: {error}
       </pre>
     );
