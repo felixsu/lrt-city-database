@@ -6,15 +6,17 @@ Next.js (App Router), Prisma/PostgreSQL, Auth.js (Google SSO), and Cloudinary.
 ## Pages
 
 - **Home** (public) — About (markdown), How to Join (markdown, supports
-  mermaid diagrams via a ` ```mermaid ` fenced code block), and a Timeline of
-  events (title, picture, description).
+  mermaid diagrams via a ` ```mermaid ` fenced code block), a Timeline of
+  events (title, picture, description), and a Media section of news coverage
+  cards (title, description, thumbnail auto-fetched via Open Graph tags; each
+  card opens the source in a new tab).
 - **Users** (public, read-only) — Customer records with sensitive fields
   masked: name shows only the last 3 characters, contact number shows only
   the first 4 and last 4 characters. Each user can have multiple PPJB
   accounts, each with photos, an assigned LRT City building, remarks, buy
   date, and join date.
 - **Administrative** (protected) — Edit Home content, manage buildings, manage
-  the Timeline, and full CRUD on Users/PPJB/photos.
+  the Timeline and Media links, and full CRUD on Users/PPJB/photos.
 
 ## Admin access
 
