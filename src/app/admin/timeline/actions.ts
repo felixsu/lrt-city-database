@@ -4,19 +4,65 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
-import { uploadCompressedImage, deleteImage } from "@/lib/cloudinary";
+import {
+  uploadCompressedImage,
+  uploadVideo,
+  deleteImage,
+  MAX_UPLOAD_BYTES,
+} from "@/lib/cloudinary";
 
-async function uploadPictureIfPresent(formData: FormData) {
-  const file = formData.get("picture");
-  if (!(file instanceof File) || file.size === 0) return null;
+export type TimelineMediaFormState = { error: string | null };
 
+function collectMediaFiles(formData: FormData): File[] {
+  return formData
+    .getAll("media")
+    .filter((entry): entry is File => entry instanceof File && entry.size > 0);
+}
+
+/** Returns an error message if any file exceeds the per-file cap, else null. */
+function findOversizedFile(files: File[]): string | null {
+  const tooBig = files.find((file) => file.size > MAX_UPLOAD_BYTES);
+  return tooBig ? `"${tooBig.name}" is larger than 10MB. Please choose a smaller file.` : null;
+}
+
+async function uploadMediaFile(file: File) {
   const arrayBuffer = await file.arrayBuffer();
   const base64 = Buffer.from(arrayBuffer).toString("base64");
   const dataUri = `data:${file.type};base64,${base64}`;
-  return uploadCompressedImage(dataUri, "lrt-city-tebet/timeline");
+
+  if (file.type.startsWith("video/")) {
+    const result = await uploadVideo(dataUri, "lrt-city-tebet/timeline");
+    return { type: "VIDEO" as const, result };
+  }
+  const result = await uploadCompressedImage(dataUri, "lrt-city-tebet/timeline");
+  return { type: "PHOTO" as const, result };
 }
 
-export async function createTimelineEvent(formData: FormData) {
+async function createMediaRows(timelineEventId: string, files: File[]) {
+  for (const file of files) {
+    try {
+      const { type, result } = await uploadMediaFile(file);
+      await prisma.timelineEventMedia.create({
+        data: {
+          timelineEventId,
+          type,
+          url: result.secure_url,
+          publicId: result.public_id,
+          bytes: result.bytes,
+          width: result.width,
+          height: result.height,
+        },
+      });
+    } catch (err) {
+      console.error("Failed to upload timeline media:", err);
+    }
+  }
+}
+
+export async function createTimelineEvent(
+  _prevState: TimelineMediaFormState,
+  formData: FormData,
+): Promise<TimelineMediaFormState> {
   await requireAdmin();
 
   const title = String(formData.get("title") ?? "").trim();
@@ -24,20 +70,22 @@ export async function createTimelineEvent(formData: FormData) {
   const eventDateRaw = String(formData.get("eventDate") ?? "");
   const order = Number(formData.get("order") ?? 0);
 
-  if (!title) return;
+  if (!title) return { error: "Title is required." };
 
-  const picture = await uploadPictureIfPresent(formData);
+  const files = collectMediaFiles(formData);
+  const oversizedError = findOversizedFile(files);
+  if (oversizedError) return { error: oversizedError };
 
-  await prisma.timelineEvent.create({
+  const event = await prisma.timelineEvent.create({
     data: {
       title,
       description,
       order: Number.isFinite(order) ? order : 0,
       eventDate: eventDateRaw ? new Date(eventDateRaw) : null,
-      pictureUrl: picture?.secure_url,
-      picturePublicId: picture?.public_id,
     },
   });
+
+  await createMediaRows(event.id, files);
 
   revalidatePath("/");
   revalidatePath("/admin/timeline");
@@ -54,13 +102,6 @@ export async function updateTimelineEvent(formData: FormData) {
   const order = Number(formData.get("order") ?? 0);
   if (!id || !title) return;
 
-  const existing = await prisma.timelineEvent.findUniqueOrThrow({ where: { id } });
-  const picture = await uploadPictureIfPresent(formData);
-
-  if (picture && existing.picturePublicId) {
-    await deleteImage(existing.picturePublicId);
-  }
-
   await prisma.timelineEvent.update({
     where: { id },
     data: {
@@ -68,9 +109,6 @@ export async function updateTimelineEvent(formData: FormData) {
       description,
       order: Number.isFinite(order) ? order : 0,
       eventDate: eventDateRaw ? new Date(eventDateRaw) : null,
-      ...(picture
-        ? { pictureUrl: picture.secure_url, picturePublicId: picture.public_id }
-        : {}),
     },
   });
 
@@ -97,13 +135,53 @@ export async function deleteTimelineEvent(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
 
-  const existing = await prisma.timelineEvent.findUnique({ where: { id } });
-  if (existing?.picturePublicId) {
-    await deleteImage(existing.picturePublicId);
+  const existing = await prisma.timelineEvent.findUnique({ where: { id }, include: { media: true } });
+  if (existing) {
+    for (const item of existing.media) {
+      await deleteImage(item.publicId, item.type === "VIDEO" ? "video" : "image");
+    }
   }
 
   await prisma.timelineEvent.delete({ where: { id } });
   revalidatePath("/");
   revalidatePath("/admin/timeline");
   redirect("/admin/timeline");
+}
+
+export async function addTimelineEventMedia(
+  _prevState: TimelineMediaFormState,
+  formData: FormData,
+): Promise<TimelineMediaFormState> {
+  await requireAdmin();
+
+  const timelineEventId = String(formData.get("timelineEventId") ?? "");
+  if (!timelineEventId) return { error: "Missing timeline event reference." };
+
+  const files = collectMediaFiles(formData);
+  if (files.length === 0) return { error: "Choose at least one photo or video to upload." };
+
+  const oversizedError = findOversizedFile(files);
+  if (oversizedError) return { error: oversizedError };
+
+  await createMediaRows(timelineEventId, files);
+
+  revalidatePath("/");
+  revalidatePath(`/admin/timeline/${timelineEventId}`);
+  return { error: null };
+}
+
+export async function deleteTimelineEventMedia(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const timelineEventId = String(formData.get("timelineEventId") ?? "");
+  if (!id) return;
+
+  const media = await prisma.timelineEventMedia.findUnique({ where: { id } });
+  if (media) {
+    await deleteImage(media.publicId, media.type === "VIDEO" ? "video" : "image");
+    await prisma.timelineEventMedia.delete({ where: { id } });
+  }
+
+  revalidatePath("/");
+  if (timelineEventId) revalidatePath(`/admin/timeline/${timelineEventId}`);
 }

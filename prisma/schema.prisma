@@ -89,16 +89,33 @@ model OwnershipDocumentPhoto {
   createdAt           DateTime          @default(now())
 }
 
+enum TimelineMediaType {
+  PHOTO
+  VIDEO
+}
+
 model TimelineEvent {
-  id           String   @id @default(cuid())
-  title        String
-  description  String
-  pictureUrl   String?
-  picturePublicId String?
-  eventDate    DateTime?
-  order        Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  eventDate   DateTime?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  media       TimelineEventMedia[]
+}
+
+model TimelineEventMedia {
+  id              String            @id @default(cuid())
+  timelineEventId String
+  timelineEvent   TimelineEvent     @relation(fields: [timelineEventId], references: [id], onDelete: Cascade)
+  type            TimelineMediaType
+  url             String
+  publicId        String
+  bytes           Int?
+  width           Int?
+  height          Int?
+  createdAt       DateTime          @default(now())
 }
 
 model HomeContent {

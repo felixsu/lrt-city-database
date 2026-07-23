@@ -14,6 +14,8 @@ const MAX_DIMENSION = 2000;
 // Progressively lower quality until the asset fits under MAX_BYTES.
 const QUALITY_STEPS = [80, 70, 60, 50, 40, 30, 20, 10];
 
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
 /**
  * Uploads an image, constraining it to MAX_DIMENSION px and iterating
  * quality downward until the stored asset is under MAX_BYTES. Re-uploads
@@ -51,6 +53,21 @@ export async function uploadCompressedImage(
   return lastResult as UploadApiResponse;
 }
 
-export async function deleteImage(publicId: string) {
-  await cloudinary.uploader.destroy(publicId);
+/**
+ * Uploads a video as-is (no forced re-encode loop — the 10MB input cap is
+ * the practical size ceiling), letting Cloudinary apply its own
+ * quality/format optimization at upload time.
+ */
+export async function uploadVideo(dataUri: string, folder: string): Promise<UploadApiResponse> {
+  return cloudinary.uploader.upload(dataUri, {
+    resource_type: "video",
+    folder,
+    overwrite: true,
+    quality: "auto",
+    fetch_format: "auto",
+  });
+}
+
+export async function deleteImage(publicId: string, resourceType: "image" | "video" = "image") {
+  await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
 }
