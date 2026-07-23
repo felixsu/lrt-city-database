@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 const inputClass =
   "mt-1 w-full rounded-lg border border-hairline bg-surface px-3 py-2 text-sm outline-none focus:border-accent";
 
@@ -11,7 +9,6 @@ export function TimelineEventFormFields({
     description: string;
     order: number;
     eventDate: Date | null;
-    pictureUrl: string | null;
   };
 }) {
   const eventDateValue = defaultValues?.eventDate
@@ -62,21 +59,6 @@ export function TimelineEventFormFields({
             className={`${inputClass} w-24`}
           />
         </div>
-      </div>
-
-      <div>
-        <label className="text-sm font-medium text-ink">
-          Picture {defaultValues ? "(leave empty to keep current)" : ""}
-        </label>
-        {defaultValues?.pictureUrl && (
-          <div className="relative mt-2 h-24 w-24 overflow-hidden rounded-md bg-surface-soft">
-            <Image src={defaultValues.pictureUrl} alt="Current" fill className="object-cover" />
-          </div>
-        )}
-        <input type="file" name="picture" accept="image/*" className="mt-2 block w-full text-sm" />
-        <p className="mt-1 text-xs text-muted">
-          Automatically compressed to under 100KB and resized to max 2000px.
-        </p>
       </div>
     </>
   );

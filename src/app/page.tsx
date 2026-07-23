@@ -1,10 +1,10 @@
-import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { getHomeContent } from "@/lib/home-content";
 import { MarkdownContent } from "@/components/markdown-content";
 import { PublicShell } from "@/components/public-shell";
 import { Card } from "@/components/ui/card";
 import { SectionEyebrow } from "@/components/ui/section-eyebrow";
+import { TimelineMediaCarousel } from "@/components/timeline-media-carousel";
 
 function hostname(url: string) {
   try {
@@ -24,6 +24,7 @@ export default async function HomePage() {
     getHomeContent(),
     prisma.timelineEvent.findMany({
       orderBy: [{ order: "asc" }, { eventDate: "asc" }],
+      include: { media: { orderBy: { createdAt: "asc" } } },
     }),
     prisma.mediaLink.findMany({
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
@@ -87,11 +88,7 @@ export default async function HomePage() {
                       )}
                     </div>
                     <Card className="overflow-hidden">
-                      <div className="relative h-[130px] w-full bg-gradient-to-br from-[#ece7de] to-[#e0d8c8]">
-                        {event.pictureUrl && (
-                          <Image src={event.pictureUrl} alt={event.title} fill className="object-cover" />
-                        )}
-                      </div>
+                      <TimelineMediaCarousel media={event.media} title={event.title} />
                       <div className="p-4">
                         <h3 className="mb-2 text-[15px] font-medium text-ink">{event.title}</h3>
                         <p className="text-[13px] leading-relaxed text-muted">{event.description}</p>
