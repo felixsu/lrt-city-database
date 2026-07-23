@@ -6,7 +6,7 @@ import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 
 function StatTile({ label, value, href }: { label: string; value: number; href: string }) {
   return (
-    <Link href={href}>
+    <Link href={href} prefetch={false}>
       <Card accent className="p-[22px] transition-colors hover:border-accent/40">
         <SectionEyebrow className="mb-2.5">{label}</SectionEyebrow>
         <div className="font-mono text-[32px] font-medium text-ink tabular-nums">{value}</div>

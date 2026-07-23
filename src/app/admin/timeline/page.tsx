@@ -45,7 +45,11 @@ export default async function AdminTimelinePage() {
                     {formatEventDate(event.eventDate)}
                   </span>
                   <span className="flex-1 truncate text-sm text-ink">{event.title}</span>
-                  <Link href={`/admin/timeline/${event.id}`} className="text-muted hover:text-ink">
+                  <Link
+                    href={`/admin/timeline/${event.id}`}
+                    prefetch={false}
+                    className="text-muted hover:text-ink"
+                  >
                     <Pencil className="h-[15px] w-[15px]" />
                   </Link>
                   <form action={deleteTimelineEvent}>

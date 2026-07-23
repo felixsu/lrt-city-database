@@ -13,6 +13,7 @@ import {
   deletePpjbPhoto,
 } from "../actions";
 import { UserForm } from "../user-form";
+import { AddPpjbForm, AddPpjbPhotoForm } from "./ppjb-forms";
 
 export default async function EditUserPage({
   params,
@@ -94,48 +95,11 @@ export default async function EditUserPage({
                 ))}
               </div>
 
-              <form
-                action={addPpjbPhoto}
-                encType="multipart/form-data"
-                className="mt-3 flex items-center gap-2"
-              >
-                <input type="hidden" name="ppjbId" value={ppjb.id} />
-                <input type="hidden" name="userId" value={user.id} />
-                <input type="file" name="photo" accept="image/*" required className="text-xs" />
-                <Button type="submit" size="sm">
-                  Add photo
-                </Button>
-              </form>
+              <AddPpjbPhotoForm action={addPpjbPhoto} ppjbId={ppjb.id} userId={user.id} />
             </Card>
           ))}
 
-          <form
-            action={addPpjb}
-            encType="multipart/form-data"
-            className="flex flex-wrap items-end gap-3 rounded-xl border border-dashed border-hairline p-4"
-          >
-            <input type="hidden" name="userId" value={user.id} />
-            <div>
-              <label className="text-sm font-medium text-ink">PPJB account number</label>
-              <input
-                type="text"
-                name="accountNumber"
-                required
-                placeholder="e.g. 005/ACP-TPM/PPJB/II/2024"
-                className="mt-1 w-72 rounded-lg border border-hairline bg-surface px-3 py-2 font-mono text-sm"
-              />
-              <p className="mt-1 text-xs text-muted">
-                Format: sequence/developer-code/PPJB/month-roman/year.
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-ink">Photo (optional)</label>
-              <input type="file" name="photo" accept="image/*" className="mt-1 block text-sm" />
-            </div>
-            <Button type="submit" variant="primary">
-              Add PPJB
-            </Button>
-          </form>
+          <AddPpjbForm action={addPpjb} userId={user.id} />
         </div>
       </section>
 

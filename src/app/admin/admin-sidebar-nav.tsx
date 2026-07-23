@@ -34,6 +34,7 @@ export function AdminSidebarNav() {
           <Link
             key={section.href}
             href={section.href}
+            prefetch={false}
             className={`-ml-[3px] flex items-center gap-3 rounded-lg border-l-[3px] px-3 py-2.5 text-sm font-medium ${
               active
                 ? "border-accent bg-accent/18 text-white"

@@ -28,8 +28,12 @@ export async function uploadCompressedImage(
 
   for (const quality of QUALITY_STEPS) {
     const result: UploadApiResponse = await cloudinary.uploader.upload(dataUri, {
-      folder,
-      public_id: lastResult?.public_id,
+      // Only set `folder` on the first attempt. On retries, `public_id` is
+      // already fully-qualified from the previous response — in Dynamic
+      // Folder Mode, re-passing `folder` alongside it prepends the folder
+      // again on top of itself each time, eventually exceeding Cloudinary's
+      // public_id length limit.
+      ...(lastResult ? { public_id: lastResult.public_id } : { folder }),
       overwrite: true,
       width: MAX_DIMENSION,
       height: MAX_DIMENSION,

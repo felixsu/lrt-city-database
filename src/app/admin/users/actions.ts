@@ -119,7 +119,7 @@ export async function updateUser(
   revalidatePath("/users");
   revalidatePath("/admin/users");
   revalidatePath(`/admin/users/${id}`);
-  return { error: null };
+  redirect("/admin/users");
 }
 
 export async function deleteUser(formData: FormData) {
@@ -146,14 +146,24 @@ export async function deleteUser(formData: FormData) {
   redirect("/admin/users");
 }
 
-export async function addPpjb(formData: FormData) {
+export async function addPpjb(
+  _prevState: UserFormState,
+  formData: FormData,
+): Promise<UserFormState> {
   await requireAdmin();
 
   const userId = String(formData.get("userId") ?? "");
   const accountNumber = String(formData.get("accountNumber") ?? "").trim();
-  if (!userId || !accountNumber) return;
+  if (!userId || !accountNumber) return { error: "PPJB account number is required." };
 
-  const photo = await uploadPhotoIfPresent(formData);
+  let photo: Awaited<ReturnType<typeof uploadPhotoIfPresent>> = null;
+  let photoError: string | null = null;
+  try {
+    photo = await uploadPhotoIfPresent(formData);
+  } catch (err) {
+    console.error("Failed to upload PPJB photo:", err);
+    photoError = "PPJB added, but the photo failed to upload — add it separately below.";
+  }
 
   await prisma.ppjb.create({
     data: {
@@ -175,6 +185,7 @@ export async function addPpjb(formData: FormData) {
 
   revalidatePath("/users");
   revalidatePath(`/admin/users/${userId}`);
+  return { error: photoError };
 }
 
 export async function deletePpjb(formData: FormData) {
@@ -195,15 +206,24 @@ export async function deletePpjb(formData: FormData) {
   if (userId) revalidatePath(`/admin/users/${userId}`);
 }
 
-export async function addPpjbPhoto(formData: FormData) {
+export async function addPpjbPhoto(
+  _prevState: UserFormState,
+  formData: FormData,
+): Promise<UserFormState> {
   await requireAdmin();
 
   const ppjbId = String(formData.get("ppjbId") ?? "");
   const userId = String(formData.get("userId") ?? "");
-  if (!ppjbId) return;
+  if (!ppjbId) return { error: "Missing PPJB reference." };
 
-  const photo = await uploadPhotoIfPresent(formData);
-  if (!photo) return;
+  let photo: Awaited<ReturnType<typeof uploadPhotoIfPresent>>;
+  try {
+    photo = await uploadPhotoIfPresent(formData);
+  } catch (err) {
+    console.error("Failed to upload PPJB photo:", err);
+    return { error: "Photo upload failed. Please try again with a smaller image." };
+  }
+  if (!photo) return { error: "Choose a photo to upload." };
 
   await prisma.ppjbPhoto.create({
     data: {
@@ -218,6 +238,7 @@ export async function addPpjbPhoto(formData: FormData) {
 
   revalidatePath("/users");
   if (userId) revalidatePath(`/admin/users/${userId}`);
+  return { error: null };
 }
 
 export async function deletePpjbPhoto(formData: FormData) {
