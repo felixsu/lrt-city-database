@@ -3,14 +3,14 @@
 import { useRef, useState, useTransition } from "react";
 import { GripVertical } from "lucide-react";
 
-export function ReorderableList<T extends { id: string }>({
+type ReorderableItem = { id: string; content: React.ReactNode };
+
+export function ReorderableList({
   items,
   reorderAction,
-  renderItem,
 }: {
-  items: T[];
+  items: ReorderableItem[];
   reorderAction: (orderedIds: string[]) => Promise<void>;
-  renderItem: (item: T) => React.ReactNode;
 }) {
   const [prevItems, setPrevItems] = useState(items);
   const [order, setOrder] = useState(items);
@@ -22,7 +22,7 @@ export function ReorderableList<T extends { id: string }>({
     setOrder(items);
   }
 
-  function persist(nextOrder: T[]) {
+  function persist(nextOrder: ReorderableItem[]) {
     dragId.current = null;
     startTransition(() => {
       reorderAction(nextOrder.map((item) => item.id));
@@ -56,7 +56,7 @@ export function ReorderableList<T extends { id: string }>({
           className="flex items-center gap-3 border-b border-hairline-soft py-3 last:border-b-0"
         >
           <GripVertical className="h-4 w-4 flex-none cursor-grab text-muted-soft active:cursor-grabbing" />
-          <div className="min-w-0 flex-1">{renderItem(item)}</div>
+          <div className="min-w-0 flex-1">{item.content}</div>
         </div>
       ))}
     </div>
