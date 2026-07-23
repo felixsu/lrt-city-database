@@ -14,28 +14,32 @@ export default async function UsersPage({
   const { building: buildingFilter } = await searchParams;
   const activeBuilding = buildingFilter && buildingFilter !== "all" ? buildingFilter : "all";
 
-  const [users, buildings] = await Promise.all([
-    prisma.user.findMany({
-      where: activeBuilding !== "all" ? { buildingId: activeBuilding } : undefined,
+  const [documents, buildings] = await Promise.all([
+    prisma.ownershipDocument.findMany({
+      where: activeBuilding !== "all" ? { user: { buildingId: activeBuilding } } : undefined,
       include: {
-        building: true,
-        ownershipDocuments: { include: { photos: true }, orderBy: { createdAt: "asc" } },
+        user: { include: { building: true } },
+        photos: true,
       },
-      orderBy: [{ building: { name: "asc" } }, { name: "asc" }],
+      orderBy: [
+        { user: { building: { name: "asc" } } },
+        { user: { name: "asc" } },
+        { createdAt: "asc" },
+      ],
     }),
     prisma.building.findMany({ orderBy: { name: "asc" } }),
   ]);
 
-  const groups: { key: string; name: string; residents: typeof users }[] = [];
-  for (const user of users) {
-    const key = user.buildingId ?? "unassigned";
-    const name = user.building?.name ?? "Unassigned";
+  const groups: { key: string; name: string; documents: typeof documents }[] = [];
+  for (const doc of documents) {
+    const key = doc.user.buildingId ?? "unassigned";
+    const name = doc.user.building?.name ?? "Unassigned";
     let group = groups.find((g) => g.key === key);
     if (!group) {
-      group = { key, name, residents: [] };
+      group = { key, name, documents: [] };
       groups.push(group);
     }
-    group.residents.push(user);
+    group.documents.push(doc);
   }
 
   return (
@@ -76,40 +80,40 @@ export default async function UsersPage({
         </div>
 
         {groups.length === 0 ? (
-          <p className="text-sm text-muted">No users yet.</p>
+          <p className="text-sm text-muted">No units on record yet.</p>
         ) : (
           groups.map((group) => (
             <div key={group.key} className="mb-8">
               <div className="mb-3.5 flex items-baseline gap-2.5 border-b border-hairline pb-2.5">
                 <h2 className="font-sans text-[17px] font-medium text-ink">{group.name}</h2>
                 <span className="font-mono text-xs text-muted">
-                  {group.residents.length} resident{group.residents.length === 1 ? "" : "s"}
+                  {group.documents.length} unit{group.documents.length === 1 ? "" : "s"}
                 </span>
               </div>
 
-              {group.residents.map((user) => (
+              {group.documents.map((doc) => (
                 <div
-                  key={user.id}
+                  key={doc.id}
                   className="grid grid-cols-1 gap-4 border-b border-hairline-soft py-4 sm:grid-cols-[0.9fr_0.7fr_1fr_1.3fr_1.3fr_1.2fr]"
                 >
                   <div>
                     <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
                       Name
                     </div>
-                    <div className="font-mono text-sm text-ink">{maskName(user.name)}</div>
+                    <div className="font-mono text-sm text-ink">{maskName(doc.user.name)}</div>
                   </div>
                   <div>
                     <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
                       Unit
                     </div>
-                    <div className="font-mono text-sm text-ink">{user.unitNumber ?? "—"}</div>
+                    <div className="font-mono text-sm text-ink">{doc.unitNumber ?? "—"}</div>
                   </div>
                   <div>
                     <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
                       Contact
                     </div>
                     <div className="font-mono text-sm text-ink">
-                      {maskContactNumber(user.contactNumber)}
+                      {maskContactNumber(doc.user.contactNumber)}
                     </div>
                   </div>
                   <div>
@@ -117,40 +121,32 @@ export default async function UsersPage({
                       Unit type
                     </div>
                     <div className="font-mono text-sm text-ink">
-                      {user.unitType ? UNIT_TYPE_LABELS[user.unitType as UnitType] : "—"}
+                      {doc.unitType ? UNIT_TYPE_LABELS[doc.unitType as UnitType] : "—"}
                     </div>
                   </div>
                   <div>
                     <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
-                      Ownership documents
+                      PPJB number
                     </div>
-                    {user.ownershipDocuments.length === 0 ? (
-                      <div className="text-sm text-muted">—</div>
-                    ) : (
-                      <div className="flex flex-col gap-1.5">
-                        {user.ownershipDocuments.map((doc) => (
-                          <div key={doc.id} className="flex items-center gap-2">
-                            <span className="rounded-md border border-hairline bg-surface-soft px-2 py-0.5 font-mono text-xs text-ink">
-                              {doc.accountNumber}
-                            </span>
-                            {doc.photos.slice(0, 2).map((photo) => (
-                              <div
-                                key={photo.id}
-                                className="relative h-[18px] w-[18px] overflow-hidden rounded-sm border border-hairline"
-                              >
-                                <Image src={photo.url} alt="" fill className="object-cover" />
-                              </div>
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-md border border-hairline bg-surface-soft px-2 py-0.5 font-mono text-xs text-ink">
+                        {doc.accountNumber}
+                      </span>
+                      {doc.photos.slice(0, 2).map((photo) => (
+                        <div
+                          key={photo.id}
+                          className="relative h-[18px] w-[18px] overflow-hidden rounded-sm border border-hairline"
+                        >
+                          <Image src={photo.url} alt="" fill className="object-cover" />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <div>
                     <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
                       Remarks
                     </div>
-                    <div className="text-[13px] text-muted">{user.remarks || "—"}</div>
+                    <div className="text-[13px] text-muted">{doc.user.remarks || "—"}</div>
                   </div>
                 </div>
               ))}

@@ -55,45 +55,23 @@ export async function createUser(
   const buildingId = String(formData.get("buildingId") ?? "") || null;
   const loanBankId = String(formData.get("loanBankId") ?? "") || null;
   const remarks = String(formData.get("remarks") ?? "").trim() || null;
-  const unitType = parseUnitType(formData.get("unitType"));
   const paymentStatus = parsePaymentStatus(formData.get("paymentStatus"));
   const paidOffDate =
     paymentStatus === PaymentStatus.PAID_OFF ? parseDate(formData.get("paidOffDate")) : null;
 
   if (!name || !contactNumber) return { error: "Name and contact number are required." };
 
-  const unitNumberResult = unitNumberSchema.safeParse(formData.get("unitNumber"));
-  if (!unitNumberResult.success) {
-    return { error: unitNumberResult.error.issues[0].message };
-  }
-  const unitNumber = unitNumberResult.data;
-
-  const existing = await prisma.user.findFirst({ where: { unitNumber } });
-  if (existing) {
-    return { error: `Unit ${unitNumber} is already assigned to another resident.` };
-  }
-
-  let user;
-  try {
-    user = await prisma.user.create({
-      data: {
-        name,
-        unitNumber,
-        unitType,
-        contactNumber,
-        buildingId,
-        loanBankId,
-        paymentStatus,
-        paidOffDate,
-        remarks,
-      },
-    });
-  } catch (err) {
-    if (isUniqueConstraintError(err)) {
-      return { error: `Unit ${unitNumber} is already assigned to another resident.` };
-    }
-    throw err;
-  }
+  const user = await prisma.user.create({
+    data: {
+      name,
+      contactNumber,
+      buildingId,
+      loanBankId,
+      paymentStatus,
+      paidOffDate,
+      remarks,
+    },
+  });
 
   revalidatePath("/users");
   revalidatePath("/admin/users");
@@ -112,45 +90,24 @@ export async function updateUser(
   const buildingId = String(formData.get("buildingId") ?? "") || null;
   const loanBankId = String(formData.get("loanBankId") ?? "") || null;
   const remarks = String(formData.get("remarks") ?? "").trim() || null;
-  const unitType = parseUnitType(formData.get("unitType"));
   const paymentStatus = parsePaymentStatus(formData.get("paymentStatus"));
   const paidOffDate =
     paymentStatus === PaymentStatus.PAID_OFF ? parseDate(formData.get("paidOffDate")) : null;
 
   if (!id || !name || !contactNumber) return { error: "Name and contact number are required." };
 
-  const unitNumberResult = unitNumberSchema.safeParse(formData.get("unitNumber"));
-  if (!unitNumberResult.success) {
-    return { error: unitNumberResult.error.issues[0].message };
-  }
-  const unitNumber = unitNumberResult.data;
-
-  const existing = await prisma.user.findFirst({ where: { unitNumber, NOT: { id } } });
-  if (existing) {
-    return { error: `Unit ${unitNumber} is already assigned to another resident.` };
-  }
-
-  try {
-    await prisma.user.update({
-      where: { id },
-      data: {
-        name,
-        unitNumber,
-        unitType,
-        contactNumber,
-        buildingId,
-        loanBankId,
-        paymentStatus,
-        paidOffDate,
-        remarks,
-      },
-    });
-  } catch (err) {
-    if (isUniqueConstraintError(err)) {
-      return { error: `Unit ${unitNumber} is already assigned to another resident.` };
-    }
-    throw err;
-  }
+  await prisma.user.update({
+    where: { id },
+    data: {
+      name,
+      contactNumber,
+      buildingId,
+      loanBankId,
+      paymentStatus,
+      paidOffDate,
+      remarks,
+    },
+  });
 
   revalidatePath("/users");
   revalidatePath("/admin/users");
@@ -195,6 +152,18 @@ export async function createOwnershipDocument(
   const accountNumber = String(formData.get("accountNumber") ?? "").trim();
   if (!userId || !accountNumber) return { error: "PPJB number is required." };
 
+  const unitNumberResult = unitNumberSchema.safeParse(formData.get("unitNumber"));
+  if (!unitNumberResult.success) {
+    return { error: unitNumberResult.error.issues[0].message };
+  }
+  const unitNumber = unitNumberResult.data;
+  const unitType = parseUnitType(formData.get("unitType"));
+
+  const existingUnit = await prisma.ownershipDocument.findFirst({ where: { unitNumber } });
+  if (existingUnit) {
+    return { error: `Unit ${unitNumber} is already assigned to another document.` };
+  }
+
   const ppjbDate = parseDate(formData.get("ppjbDate"));
   const sppuNumber = String(formData.get("sppuNumber") ?? "").trim() || null;
   const sppuDate = parseDate(formData.get("sppuDate"));
@@ -217,28 +186,37 @@ export async function createOwnershipDocument(
     warning = "Document added, but the SPPU image failed to upload — try replacing it below.";
   }
 
-  await prisma.ownershipDocument.create({
-    data: {
-      userId,
-      accountNumber,
-      ppjbDate,
-      sppuNumber,
-      sppuDate,
-      sppuImageUrl: sppuImage?.secure_url,
-      sppuImagePublicId: sppuImage?.public_id,
-      photos: photo
-        ? {
-            create: {
-              url: photo.secure_url,
-              publicId: photo.public_id,
-              bytes: photo.bytes,
-              width: photo.width,
-              height: photo.height,
-            },
-          }
-        : undefined,
-    },
-  });
+  try {
+    await prisma.ownershipDocument.create({
+      data: {
+        userId,
+        accountNumber,
+        unitNumber,
+        unitType,
+        ppjbDate,
+        sppuNumber,
+        sppuDate,
+        sppuImageUrl: sppuImage?.secure_url,
+        sppuImagePublicId: sppuImage?.public_id,
+        photos: photo
+          ? {
+              create: {
+                url: photo.secure_url,
+                publicId: photo.public_id,
+                bytes: photo.bytes,
+                width: photo.width,
+                height: photo.height,
+              },
+            }
+          : undefined,
+      },
+    });
+  } catch (err) {
+    if (isUniqueConstraintError(err)) {
+      return { error: `Unit ${unitNumber} is already assigned to another document.` };
+    }
+    throw err;
+  }
 
   revalidatePath("/users");
   revalidatePath(`/admin/users/${userId}`);
@@ -255,6 +233,20 @@ export async function updateOwnershipDocument(
   const userId = String(formData.get("userId") ?? "");
   const accountNumber = String(formData.get("accountNumber") ?? "").trim();
   if (!id || !accountNumber) return { error: "PPJB number is required." };
+
+  const unitNumberResult = unitNumberSchema.safeParse(formData.get("unitNumber"));
+  if (!unitNumberResult.success) {
+    return { error: unitNumberResult.error.issues[0].message };
+  }
+  const unitNumber = unitNumberResult.data;
+  const unitType = parseUnitType(formData.get("unitType"));
+
+  const existingUnit = await prisma.ownershipDocument.findFirst({
+    where: { unitNumber, NOT: { id } },
+  });
+  if (existingUnit) {
+    return { error: `Unit ${unitNumber} is already assigned to another document.` };
+  }
 
   const ppjbDate = parseDate(formData.get("ppjbDate"));
   const sppuNumber = String(formData.get("sppuNumber") ?? "").trim() || null;
@@ -276,18 +268,27 @@ export async function updateOwnershipDocument(
     await deleteImage(existing.sppuImagePublicId);
   }
 
-  await prisma.ownershipDocument.update({
-    where: { id },
-    data: {
-      accountNumber,
-      ppjbDate,
-      sppuNumber,
-      sppuDate,
-      ...(sppuImage
-        ? { sppuImageUrl: sppuImage.secure_url, sppuImagePublicId: sppuImage.public_id }
-        : {}),
-    },
-  });
+  try {
+    await prisma.ownershipDocument.update({
+      where: { id },
+      data: {
+        accountNumber,
+        unitNumber,
+        unitType,
+        ppjbDate,
+        sppuNumber,
+        sppuDate,
+        ...(sppuImage
+          ? { sppuImageUrl: sppuImage.secure_url, sppuImagePublicId: sppuImage.public_id }
+          : {}),
+      },
+    });
+  } catch (err) {
+    if (isUniqueConstraintError(err)) {
+      return { error: `Unit ${unitNumber} is already assigned to another document.` };
+    }
+    throw err;
+  }
 
   revalidatePath("/users");
   if (userId) revalidatePath(`/admin/users/${userId}`);

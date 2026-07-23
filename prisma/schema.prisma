@@ -48,8 +48,6 @@ model LoanBank {
 model User {
   id                 String        @id @default(cuid())
   name               String
-  unitNumber         String?       @unique
-  unitType           String?
   contactNumber      String
   remarks            String?
   loanBankId         String?
@@ -66,6 +64,8 @@ model User {
 model OwnershipDocument {
   id                String   @id @default(cuid())
   accountNumber     String
+  unitNumber        String?  @unique
+  unitType          String?
   ppjbDate          DateTime?
   sppuNumber        String?
   sppuDate          DateTime?

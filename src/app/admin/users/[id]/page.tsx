@@ -53,8 +53,6 @@ export default async function EditUserPage({
             submitLabel="Save changes"
             defaultValues={{
               name: user.name,
-              unitNumber: user.unitNumber,
-              unitType: user.unitType,
               contactNumber: user.contactNumber,
               buildingId: user.buildingId,
               loanBankId: user.loanBankId,
