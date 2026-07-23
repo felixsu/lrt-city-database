@@ -21,8 +21,6 @@ export function UserForm({
   loanBanks: LoanBank[];
   defaultValues?: {
     name: string;
-    unitNumber: string | null;
-    unitType: string | null;
     contactNumber: string;
     buildingId: string | null;
     loanBankId: string | null;

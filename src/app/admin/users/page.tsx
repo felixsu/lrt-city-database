@@ -2,7 +2,7 @@ import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { LinkButton } from "@/components/ui/button";
-import { UNIT_TYPE_LABELS, PAYMENT_STATUS_LABELS, type UnitType } from "@/lib/user-enums";
+import { PAYMENT_STATUS_LABELS } from "@/lib/user-enums";
 
 function formatDate(date: Date | null) {
   if (!date) return "—";
@@ -28,7 +28,11 @@ export default async function AdminUsersPage({
               OR: [
                 { name: { contains: q, mode: "insensitive" } },
                 { contactNumber: { contains: q, mode: "insensitive" } },
-                { unitNumber: { contains: q, mode: "insensitive" } },
+                {
+                  ownershipDocuments: {
+                    some: { unitNumber: { contains: q, mode: "insensitive" } },
+                  },
+                },
               ],
             }
           : {}),
@@ -90,8 +94,6 @@ export default async function AdminUsersPage({
           <thead className="bg-surface-soft text-xs font-medium text-muted">
             <tr>
               <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Unit</th>
-              <th className="px-4 py-3">Unit type</th>
               <th className="px-4 py-3">Building</th>
               <th className="px-4 py-3">Contact</th>
               <th className="px-4 py-3">Loan bank</th>
@@ -103,7 +105,7 @@ export default async function AdminUsersPage({
           <tbody className="divide-y divide-hairline-soft">
             {users.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-6 text-center text-muted">
+                <td colSpan={7} className="px-4 py-6 text-center text-muted">
                   No users match.
                 </td>
               </tr>
@@ -111,12 +113,6 @@ export default async function AdminUsersPage({
               users.map((user) => (
                 <tr key={user.id}>
                   <td className="px-4 py-3.5 font-medium text-ink">{user.name}</td>
-                  <td className="px-4 py-3.5 font-mono text-xs text-ink">
-                    {user.unitNumber ?? "—"}
-                  </td>
-                  <td className="px-4 py-3.5 text-ink">
-                    {user.unitType ? UNIT_TYPE_LABELS[user.unitType as UnitType] : "—"}
-                  </td>
                   <td className="px-4 py-3.5 text-ink">{user.building?.name ?? "—"}</td>
                   <td className="px-4 py-3.5 font-mono text-xs text-ink">{user.contactNumber}</td>
                   <td className="px-4 py-3.5 text-ink">{user.loanBank?.name ?? "—"}</td>

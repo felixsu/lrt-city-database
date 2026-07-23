@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { UNIT_TYPES, UNIT_TYPE_LABELS } from "@/lib/user-enums";
 import type { UserFormState } from "../actions";
 
 type OwnershipDocumentAction = (
@@ -30,6 +31,8 @@ export function OwnershipDocumentCard({
   document: {
     id: string;
     accountNumber: string;
+    unitNumber: string | null;
+    unitType: string | null;
     ppjbDate: Date | null;
     sppuNumber: string | null;
     sppuDate: Date | null;
@@ -58,6 +61,34 @@ export function OwnershipDocumentCard({
         <input type="hidden" name="userId" value={userId} />
 
         <div className="flex flex-wrap gap-3">
+          <div>
+            <label className="text-xs font-medium text-muted">Unit number</label>
+            <input
+              type="text"
+              name="unitNumber"
+              required
+              placeholder="05-18"
+              pattern="\d{2}-\d{2}"
+              maxLength={5}
+              defaultValue={document.unitNumber ?? ""}
+              className={`${fieldInputClass} w-28 font-mono`}
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted">Unit type</label>
+            <select
+              name="unitType"
+              defaultValue={document.unitType ?? ""}
+              className={`${fieldInputClass} w-32`}
+            >
+              <option value="">Unspecified</option>
+              {UNIT_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {UNIT_TYPE_LABELS[type]}
+                </option>
+              ))}
+            </select>
+          </div>
           <div>
             <label className="text-xs font-medium text-muted">PPJB number</label>
             <input
@@ -182,6 +213,33 @@ export function CreateOwnershipDocumentForm({
     >
       <input type="hidden" name="userId" value={userId} />
       <div className="flex flex-wrap gap-3">
+        <div>
+          <label className="text-sm font-medium text-ink">Unit number</label>
+          <input
+            type="text"
+            name="unitNumber"
+            required
+            placeholder="05-18"
+            pattern="\d{2}-\d{2}"
+            maxLength={5}
+            className="mt-1 w-28 rounded-lg border border-hairline bg-surface px-3 py-2 font-mono text-sm"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-ink">Unit type</label>
+          <select
+            name="unitType"
+            defaultValue=""
+            className="mt-1 w-32 rounded-lg border border-hairline bg-surface px-3 py-2 text-sm"
+          >
+            <option value="">Unspecified</option>
+            {UNIT_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {UNIT_TYPE_LABELS[type]}
+              </option>
+            ))}
+          </select>
+        </div>
         <div>
           <label className="text-sm font-medium text-ink">PPJB number</label>
           <input

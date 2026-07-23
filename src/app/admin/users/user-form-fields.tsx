@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { UNIT_TYPES, UNIT_TYPE_LABELS, PAYMENT_STATUS_LABELS } from "@/lib/user-enums";
+import { PAYMENT_STATUS_LABELS } from "@/lib/user-enums";
 
 type Building = { id: string; name: string };
 type LoanBank = { id: string; name: string };
@@ -22,8 +22,6 @@ export function UserFormFields({
   loanBanks: LoanBank[];
   defaultValues?: {
     name: string;
-    unitNumber: string | null;
-    unitType: string | null;
     contactNumber: string;
     buildingId: string | null;
     loanBankId: string | null;
@@ -45,35 +43,6 @@ export function UserFormFields({
           defaultValue={defaultValues?.name}
           className={inputClass}
         />
-      </div>
-
-      <div>
-        <label className="text-sm font-medium text-ink">Unit number</label>
-        <input
-          type="text"
-          name="unitNumber"
-          required
-          placeholder="05-18"
-          pattern="\d{2}-\d{2}"
-          maxLength={5}
-          defaultValue={defaultValues?.unitNumber ?? ""}
-          className={`${inputClass} font-mono`}
-        />
-        <p className="mt-1 text-xs text-muted">
-          2-digit floor, dash, 2-digit room — e.g. 05-18.
-        </p>
-      </div>
-
-      <div>
-        <label className="text-sm font-medium text-ink">Unit type</label>
-        <select name="unitType" defaultValue={defaultValues?.unitType ?? ""} className={inputClass}>
-          <option value="">Unspecified</option>
-          {UNIT_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {UNIT_TYPE_LABELS[type]}
-            </option>
-          ))}
-        </select>
       </div>
 
       <div>
