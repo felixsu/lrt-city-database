@@ -102,10 +102,12 @@ model TimelineEvent {
 }
 
 model HomeContent {
-  id              Int      @id @default(1)
-  aboutMarkdown   String   @default("")
-  howToJoinMarkdown String @default("")
-  updatedAt       DateTime @updatedAt
+  id                Int      @id @default(1)
+  aboutTitle        String   @default("A transit-anchored home in Tebet")
+  aboutMarkdown     String   @default("")
+  howToJoinTitle    String   @default("Bergabung dengan kami")
+  howToJoinMarkdown String   @default("")
+  updatedAt         DateTime @updatedAt
 }
 
 model MediaLink {

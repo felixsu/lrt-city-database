@@ -16,7 +16,9 @@ export default async function AdminHomeContentPage() {
       </div>
 
       <HomeContentForm
+        initialAboutTitle={homeContent.aboutTitle}
         initialAbout={homeContent.aboutMarkdown}
+        initialHowToJoinTitle={homeContent.howToJoinTitle}
         initialHowToJoin={homeContent.howToJoinMarkdown}
       />
     </div>

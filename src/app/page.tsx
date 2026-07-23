@@ -53,12 +53,12 @@ export default async function HomePage() {
         <div className="mb-16 grid grid-cols-1 gap-8 md:grid-cols-2">
           <Card className="p-8">
             <SectionEyebrow className="mb-3">About</SectionEyebrow>
-            <h2 className="mb-4 text-[26px]">A transit-anchored home in Tebet</h2>
+            <h2 className="mb-4 text-[26px]">{homeContent.aboutTitle}</h2>
             <MarkdownContent markdown={homeContent.aboutMarkdown} variant="editorial" />
           </Card>
           <Card className="p-8">
             <SectionEyebrow className="mb-3">How to join</SectionEyebrow>
-            <h2 className="mb-4 text-[26px]">Four steps to a PPJB</h2>
+            <h2 className="mb-4 text-[26px]">{homeContent.howToJoinTitle}</h2>
             <MarkdownContent markdown={homeContent.howToJoinMarkdown} variant="steps" />
           </Card>
         </div>
