@@ -7,8 +7,10 @@ import type { TimelineMediaFormState } from "./actions";
 
 export function CreateTimelineEventForm({
   action,
+  maxUploadMb,
 }: {
   action: (prevState: TimelineMediaFormState, formData: FormData) => Promise<TimelineMediaFormState>;
+  maxUploadMb: number;
 }) {
   const [state, formAction, pending] = useActionState<TimelineMediaFormState, FormData>(action, {
     error: null,
@@ -31,7 +33,7 @@ export function CreateTimelineEventForm({
           multiple
           className="mt-1 block w-full text-sm"
         />
-        <p className="mt-1 text-xs text-muted">Photos and videos, up to 10MB each.</p>
+        <p className="mt-1 text-xs text-muted">Photos and videos, up to {maxUploadMb}MB each.</p>
       </div>
 
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
+import { getUploadSettings } from "@/lib/upload-settings";
 import { Button } from "@/components/ui/button";
 import {
   updateTimelineEvent,
@@ -18,10 +19,13 @@ export default async function EditTimelineEventPage({
 }) {
   await requireAdmin();
   const { id } = await params;
-  const event = await prisma.timelineEvent.findUnique({
-    where: { id },
-    include: { media: { orderBy: { createdAt: "asc" } } },
-  });
+  const [event, settings] = await Promise.all([
+    prisma.timelineEvent.findUnique({
+      where: { id },
+      include: { media: { orderBy: { createdAt: "asc" } } },
+    }),
+    getUploadSettings(),
+  ]);
   if (!event) notFound();
 
   return (
@@ -53,6 +57,7 @@ export default async function EditTimelineEventPage({
           media={event.media}
           addAction={addTimelineEventMedia}
           deleteAction={deleteTimelineEventMedia}
+          maxUploadMb={settings.timelineMaxUploadMb}
         />
       </section>
 

@@ -51,13 +51,13 @@ export default async function AdminUsersPage({
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[26px]">Users</h1>
+          <h1 className="text-[26px]">Consumers</h1>
           <p className="mt-1 text-sm text-muted">
             Manage customer records, ownership documents, and photos.
           </p>
         </div>
         <LinkButton href="/admin/users/new" variant="primary">
-          <Plus className="h-4 w-4" /> Add resident
+          <Plus className="h-4 w-4" /> Add consumer
         </LinkButton>
       </div>
 

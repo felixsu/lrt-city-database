@@ -43,7 +43,7 @@ export default async function HomePage() {
             LRT City Tebet Customer
           </h1>
           <p className="max-w-[640px] text-[17px] leading-relaxed text-white/85">
-            The customer record and community home for residents and prospective
+            The customer record and community home for consumers and prospective
             buyers of LRT City Tebet — how to join, where we&apos;ve been, and where
             we&apos;re headed.
           </p>

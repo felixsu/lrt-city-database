@@ -39,7 +39,7 @@ export default async function EditUserPage({
     <div className="flex flex-col gap-10">
       <div>
         <h1 className="text-[26px]">{user.name}</h1>
-        <p className="mt-1 text-sm text-muted">Manage user record and ownership documents.</p>
+        <p className="mt-1 text-sm text-muted">Manage consumer record and ownership documents.</p>
       </div>
 
       <section>
@@ -89,7 +89,7 @@ export default async function EditUserPage({
         <form action={deleteUser} className="mt-3">
           <input type="hidden" name="id" value={user.id} />
           <Button type="submit" variant="danger">
-            Delete user
+            Delete consumer
           </Button>
         </form>
       </section>

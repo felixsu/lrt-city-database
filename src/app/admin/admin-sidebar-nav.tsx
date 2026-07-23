@@ -11,17 +11,19 @@ import {
   Milestone,
   Newspaper,
   Shield,
+  Settings,
 } from "lucide-react";
 
 export const ADMIN_SECTIONS = [
   { segment: null, href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { segment: "home", href: "/admin/home", label: "Home content", icon: FileText },
-  { segment: "users", href: "/admin/users", label: "Users", icon: Users },
+  { segment: "users", href: "/admin/users", label: "Consumers", icon: Users },
   { segment: "buildings", href: "/admin/buildings", label: "Buildings", icon: Building2 },
   { segment: "loan-banks", href: "/admin/loan-banks", label: "Loan banks", icon: Landmark },
   { segment: "timeline", href: "/admin/timeline", label: "Timeline", icon: Milestone },
   { segment: "media", href: "/admin/media", label: "Media", icon: Newspaper },
   { segment: "admins", href: "/admin/admins", label: "Admins", icon: Shield },
+  { segment: "settings", href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export function AdminSidebarNav() {

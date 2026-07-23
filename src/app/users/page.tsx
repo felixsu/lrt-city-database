@@ -9,14 +9,25 @@ import { UNIT_TYPE_LABELS, type UnitType } from "@/lib/user-enums";
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ building?: string }>;
+  searchParams: Promise<{ building?: string; q?: string }>;
 }) {
-  const { building: buildingFilter } = await searchParams;
+  const { building: buildingFilter, q } = await searchParams;
   const activeBuilding = buildingFilter && buildingFilter !== "all" ? buildingFilter : "all";
 
   const [documents, buildings] = await Promise.all([
     prisma.ownershipDocument.findMany({
-      where: activeBuilding !== "all" ? { user: { buildingId: activeBuilding } } : undefined,
+      where: {
+        ...(activeBuilding !== "all" ? { user: { buildingId: activeBuilding } } : {}),
+        ...(q
+          ? {
+              OR: [
+                { user: { name: { contains: q, mode: "insensitive" } } },
+                { unitNumber: { contains: q, mode: "insensitive" } },
+                { accountNumber: { contains: q, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+      },
       include: {
         user: { include: { building: true } },
         photos: true,
@@ -42,12 +53,20 @@ export default async function UsersPage({
     group.documents.push(doc);
   }
 
+  function buildingHref(buildingId: string | "all") {
+    const params = new URLSearchParams();
+    if (buildingId !== "all") params.set("building", buildingId);
+    if (q) params.set("q", q);
+    const qs = params.toString();
+    return qs ? `/users?${qs}` : "/users";
+  }
+
   return (
     <PublicShell>
       <div className="h-1.5 bg-accent" />
       <div className="mx-auto max-w-[1100px] px-6 py-12 md:px-16">
         <div className="mb-1.5 flex flex-wrap items-center gap-3">
-          <h1 className="text-[32px]">Resident directory</h1>
+          <h1 className="text-[32px]">Consumer Database</h1>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface-soft px-2.5 py-1 font-mono text-[11px] text-muted">
             <Lock className="h-3 w-3" /> masked for privacy
           </span>
@@ -57,9 +76,28 @@ export default async function UsersPage({
           stay redacted here.
         </p>
 
+        <form className="mb-4 flex flex-wrap gap-2" method="GET">
+          {activeBuilding !== "all" && (
+            <input type="hidden" name="building" value={activeBuilding} />
+          )}
+          <input
+            type="text"
+            name="q"
+            defaultValue={q}
+            placeholder="Search name, unit, or PPJB number…"
+            className="h-[38px] w-72 rounded-lg border border-hairline bg-surface px-3.5 text-sm outline-none focus:border-accent"
+          />
+          <button
+            type="submit"
+            className="h-[38px] rounded-lg border border-hairline bg-surface px-4 text-sm hover:bg-surface-soft"
+          >
+            Search
+          </button>
+        </form>
+
         <div className="mb-8 flex flex-wrap gap-2">
           <Link
-            href="/users"
+            href={buildingHref("all")}
             className={`rounded-full border border-accent px-4 py-1.5 text-sm font-medium ${
               activeBuilding === "all" ? "bg-ink text-white" : "bg-white text-ink"
             }`}
@@ -69,7 +107,7 @@ export default async function UsersPage({
           {buildings.map((building) => (
             <Link
               key={building.id}
-              href={`/users?building=${building.id}`}
+              href={buildingHref(building.id)}
               className={`rounded-full border border-accent px-4 py-1.5 text-sm font-medium ${
                 activeBuilding === building.id ? "bg-ink text-white" : "bg-white text-ink"
               }`}
@@ -80,7 +118,7 @@ export default async function UsersPage({
         </div>
 
         {groups.length === 0 ? (
-          <p className="text-sm text-muted">No units on record yet.</p>
+          <p className="text-sm text-muted">No units match.</p>
         ) : (
           groups.map((group) => (
             <div key={group.key} className="mb-8">

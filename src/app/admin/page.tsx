@@ -30,7 +30,7 @@ export default async function AdminDashboardPage() {
       <h1 className="text-[26px]">Dashboard</h1>
 
       <div className="grid grid-cols-2 gap-5 sm:grid-cols-4">
-        <StatTile label="Users" value={userCount} href="/admin/users" />
+        <StatTile label="Consumers" value={userCount} href="/admin/users" />
         <StatTile label="Buildings" value={buildingCount} href="/admin/buildings" />
         <StatTile label="Timeline events" value={timelineCount} href="/admin/timeline" />
         <StatTile label="Admins" value={adminCount} href="/admin/admins" />

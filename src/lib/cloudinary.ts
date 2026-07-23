@@ -14,7 +14,15 @@ const MAX_DIMENSION = 2000;
 // Progressively lower quality until the asset fits under MAX_BYTES.
 const QUALITY_STEPS = [80, 70, 60, 50, 40, 30, 20, 10];
 
+/** Fallback per-file upload cap, matching UploadSettings' default — see src/lib/upload-settings.ts. */
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+/** Returns an error message if any file exceeds maxBytes, else null. */
+export function findOversizedFile(files: File[], maxBytes: number): string | null {
+  const tooBig = files.find((file) => file.size > maxBytes);
+  const maxMb = Math.round(maxBytes / (1024 * 1024));
+  return tooBig ? `"${tooBig.name}" is larger than ${maxMb}MB. Please choose a smaller file.` : null;
+}
 
 /**
  * Uploads an image, constraining it to MAX_DIMENSION px and iterating
