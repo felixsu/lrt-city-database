@@ -49,7 +49,7 @@ export default async function UsersPage({
   return (
     <PublicShell>
       <div className="h-1.5 bg-accent" />
-      <div className="mx-auto max-w-[960px] px-6 py-12 md:px-16">
+      <div className="mx-auto max-w-[1100px] px-6 py-12 md:px-16">
         <div className="mb-1.5 flex flex-wrap items-center gap-3">
           <h1 className="text-[32px]">Resident directory</h1>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface-soft px-2.5 py-1 font-mono text-[11px] text-muted">
@@ -98,13 +98,19 @@ export default async function UsersPage({
               {group.residents.map((user) => (
                 <div
                   key={user.id}
-                  className="grid grid-cols-1 gap-4 border-b border-hairline-soft py-4 sm:grid-cols-[1fr_1fr_1fr_1.4fr_1.4fr]"
+                  className="grid grid-cols-1 gap-4 border-b border-hairline-soft py-4 sm:grid-cols-[0.9fr_0.7fr_1fr_1.3fr_1.3fr_1.2fr]"
                 >
                   <div>
                     <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
                       Name
                     </div>
                     <div className="font-mono text-sm text-ink">{maskName(user.name)}</div>
+                  </div>
+                  <div>
+                    <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
+                      Unit
+                    </div>
+                    <div className="font-mono text-sm text-ink">{user.unitNumber ?? "—"}</div>
                   </div>
                   <div>
                     <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">

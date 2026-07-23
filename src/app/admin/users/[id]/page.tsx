@@ -12,7 +12,7 @@ import {
   addPpjbPhoto,
   deletePpjbPhoto,
 } from "../actions";
-import { UserFormFields } from "../user-form-fields";
+import { UserForm } from "../user-form";
 
 export default async function EditUserPage({
   params,
@@ -41,12 +41,15 @@ export default async function EditUserPage({
 
       <section>
         <h2 className="text-lg font-medium text-ink">Details</h2>
-        <form action={updateUser} className="mt-3 flex max-w-lg flex-col gap-4">
-          <input type="hidden" name="id" value={user.id} />
-          <UserFormFields
+        <div className="mt-3">
+          <UserForm
+            action={updateUser}
             buildings={buildings}
+            hiddenId={user.id}
+            submitLabel="Save changes"
             defaultValues={{
               name: user.name,
+              unitNumber: user.unitNumber,
               contactNumber: user.contactNumber,
               buildingId: user.buildingId,
               remarks: user.remarks,
@@ -54,10 +57,7 @@ export default async function EditUserPage({
               joinDate: user.joinDate,
             }}
           />
-          <Button type="submit" variant="primary" className="mt-2 self-start">
-            Save changes
-          </Button>
-        </form>
+        </div>
       </section>
 
       <section>
@@ -121,8 +121,12 @@ export default async function EditUserPage({
                 type="text"
                 name="accountNumber"
                 required
-                className="mt-1 rounded-lg border border-hairline bg-surface px-3 py-2 text-sm"
+                placeholder="e.g. 005/ACP-TPM/PPJB/II/2024"
+                className="mt-1 w-72 rounded-lg border border-hairline bg-surface px-3 py-2 font-mono text-sm"
               />
+              <p className="mt-1 text-xs text-muted">
+                Format: sequence/developer-code/PPJB/month-roman/year.
+              </p>
             </div>
             <div>
               <label className="text-sm font-medium text-ink">Photo (optional)</label>

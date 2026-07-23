@@ -27,6 +27,7 @@ export default async function AdminUsersPage({
               OR: [
                 { name: { contains: q, mode: "insensitive" } },
                 { contactNumber: { contains: q, mode: "insensitive" } },
+                { unitNumber: { contains: q, mode: "insensitive" } },
               ],
             }
           : {}),
@@ -56,7 +57,7 @@ export default async function AdminUsersPage({
           type="text"
           name="q"
           defaultValue={q}
-          placeholder="Search residents…"
+          placeholder="Search name, contact, or unit…"
           className="h-[38px] w-64 rounded-lg border border-hairline bg-surface px-3.5 text-sm outline-none focus:border-accent"
         />
         <select
@@ -84,6 +85,7 @@ export default async function AdminUsersPage({
           <thead className="bg-surface-soft text-xs font-medium text-muted">
             <tr>
               <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Unit</th>
               <th className="px-4 py-3">Building</th>
               <th className="px-4 py-3">Contact</th>
               <th className="px-4 py-3">Join date</th>
@@ -95,7 +97,7 @@ export default async function AdminUsersPage({
           <tbody className="divide-y divide-hairline-soft">
             {users.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-muted">
+                <td colSpan={8} className="px-4 py-6 text-center text-muted">
                   No users match.
                 </td>
               </tr>
@@ -103,6 +105,9 @@ export default async function AdminUsersPage({
               users.map((user) => (
                 <tr key={user.id}>
                   <td className="px-4 py-3.5 font-medium text-ink">{user.name}</td>
+                  <td className="px-4 py-3.5 font-mono text-xs text-ink">
+                    {user.unitNumber ?? "—"}
+                  </td>
                   <td className="px-4 py-3.5 text-ink">{user.building?.name ?? "—"}</td>
                   <td className="px-4 py-3.5 font-mono text-xs text-ink">{user.contactNumber}</td>
                   <td className="px-4 py-3.5 font-mono text-xs text-ink">

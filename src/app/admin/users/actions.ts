@@ -2,9 +2,22 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { uploadCompressedImage, deleteImage } from "@/lib/cloudinary";
+
+export type UserFormState = { error: string | null };
+
+const unitNumberSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{2}-\d{2}$/, "Unit number must be in the format 05-18 (2-digit floor, 2-digit room).");
+
+function isUniqueConstraintError(err: unknown) {
+  return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
+}
 
 function parseDate(value: FormDataEntryValue | null): Date | null {
   const str = String(value ?? "");
@@ -21,7 +34,10 @@ async function uploadPhotoIfPresent(formData: FormData) {
   return uploadCompressedImage(dataUri, "lrt-city-tebet/ppjb");
 }
 
-export async function createUser(formData: FormData) {
+export async function createUser(
+  _prevState: UserFormState,
+  formData: FormData,
+): Promise<UserFormState> {
   await requireAdmin();
 
   const name = String(formData.get("name") ?? "").trim();
@@ -31,18 +47,40 @@ export async function createUser(formData: FormData) {
   const buyDate = parseDate(formData.get("buyDate"));
   const joinDate = parseDate(formData.get("joinDate"));
 
-  if (!name || !contactNumber) return;
+  if (!name || !contactNumber) return { error: "Name and contact number are required." };
 
-  const user = await prisma.user.create({
-    data: { name, contactNumber, buildingId, remarks, buyDate, joinDate },
-  });
+  const unitNumberResult = unitNumberSchema.safeParse(formData.get("unitNumber"));
+  if (!unitNumberResult.success) {
+    return { error: unitNumberResult.error.issues[0].message };
+  }
+  const unitNumber = unitNumberResult.data;
+
+  const existing = await prisma.user.findFirst({ where: { unitNumber } });
+  if (existing) {
+    return { error: `Unit ${unitNumber} is already assigned to another resident.` };
+  }
+
+  let user;
+  try {
+    user = await prisma.user.create({
+      data: { name, unitNumber, contactNumber, buildingId, remarks, buyDate, joinDate },
+    });
+  } catch (err) {
+    if (isUniqueConstraintError(err)) {
+      return { error: `Unit ${unitNumber} is already assigned to another resident.` };
+    }
+    throw err;
+  }
 
   revalidatePath("/users");
   revalidatePath("/admin/users");
   redirect(`/admin/users/${user.id}`);
 }
 
-export async function updateUser(formData: FormData) {
+export async function updateUser(
+  _prevState: UserFormState,
+  formData: FormData,
+): Promise<UserFormState> {
   await requireAdmin();
 
   const id = String(formData.get("id") ?? "");
@@ -53,16 +91,35 @@ export async function updateUser(formData: FormData) {
   const buyDate = parseDate(formData.get("buyDate"));
   const joinDate = parseDate(formData.get("joinDate"));
 
-  if (!id || !name || !contactNumber) return;
+  if (!id || !name || !contactNumber) return { error: "Name and contact number are required." };
 
-  await prisma.user.update({
-    where: { id },
-    data: { name, contactNumber, buildingId, remarks, buyDate, joinDate },
-  });
+  const unitNumberResult = unitNumberSchema.safeParse(formData.get("unitNumber"));
+  if (!unitNumberResult.success) {
+    return { error: unitNumberResult.error.issues[0].message };
+  }
+  const unitNumber = unitNumberResult.data;
+
+  const existing = await prisma.user.findFirst({ where: { unitNumber, NOT: { id } } });
+  if (existing) {
+    return { error: `Unit ${unitNumber} is already assigned to another resident.` };
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id },
+      data: { name, unitNumber, contactNumber, buildingId, remarks, buyDate, joinDate },
+    });
+  } catch (err) {
+    if (isUniqueConstraintError(err)) {
+      return { error: `Unit ${unitNumber} is already assigned to another resident.` };
+    }
+    throw err;
+  }
 
   revalidatePath("/users");
   revalidatePath("/admin/users");
   revalidatePath(`/admin/users/${id}`);
+  return { error: null };
 }
 
 export async function deleteUser(formData: FormData) {

@@ -36,6 +36,7 @@ model Building {
 model User {
   id             String   @id @default(cuid())
   name           String
+  unitNumber     String?  @unique
   contactNumber  String
   remarks        String?
   buyDate        DateTime?

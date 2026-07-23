@@ -14,6 +14,7 @@ export function UserFormFields({
   buildings: Building[];
   defaultValues?: {
     name: string;
+    unitNumber: string | null;
     contactNumber: string;
     buildingId: string | null;
     remarks: string | null;
@@ -32,6 +33,23 @@ export function UserFormFields({
           defaultValue={defaultValues?.name}
           className={inputClass}
         />
+      </div>
+
+      <div>
+        <label className="text-sm font-medium text-ink">Unit number</label>
+        <input
+          type="text"
+          name="unitNumber"
+          required
+          placeholder="05-18"
+          pattern="\d{2}-\d{2}"
+          maxLength={5}
+          defaultValue={defaultValues?.unitNumber ?? ""}
+          className={`${inputClass} font-mono`}
+        />
+        <p className="mt-1 text-xs text-muted">
+          2-digit floor, dash, 2-digit room — e.g. 05-18.
+        </p>
       </div>
 
       <div>
