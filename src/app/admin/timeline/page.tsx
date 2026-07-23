@@ -37,29 +37,31 @@ export default async function AdminTimelinePage() {
             <p className="p-4 text-sm text-muted">No events yet.</p>
           ) : (
             <ReorderableList
-              items={events}
+              items={events.map((event) => ({
+                id: event.id,
+                content: (
+                  <div className="flex items-center gap-3">
+                    <span className="w-[70px] flex-none font-mono text-xs text-muted">
+                      {formatEventDate(event.eventDate)}
+                    </span>
+                    <span className="flex-1 truncate text-sm text-ink">{event.title}</span>
+                    <Link
+                      href={`/admin/timeline/${event.id}`}
+                      prefetch={false}
+                      className="text-muted hover:text-ink"
+                    >
+                      <Pencil className="h-[15px] w-[15px]" />
+                    </Link>
+                    <form action={deleteTimelineEvent}>
+                      <input type="hidden" name="id" value={event.id} />
+                      <button type="submit" className="text-muted hover:text-red-600">
+                        <Trash2 className="h-[15px] w-[15px]" />
+                      </button>
+                    </form>
+                  </div>
+                ),
+              }))}
               reorderAction={reorderTimelineEvents}
-              renderItem={(event) => (
-                <div className="flex items-center gap-3">
-                  <span className="w-[70px] flex-none font-mono text-xs text-muted">
-                    {formatEventDate(event.eventDate)}
-                  </span>
-                  <span className="flex-1 truncate text-sm text-ink">{event.title}</span>
-                  <Link
-                    href={`/admin/timeline/${event.id}`}
-                    prefetch={false}
-                    className="text-muted hover:text-ink"
-                  >
-                    <Pencil className="h-[15px] w-[15px]" />
-                  </Link>
-                  <form action={deleteTimelineEvent}>
-                    <input type="hidden" name="id" value={event.id} />
-                    <button type="submit" className="text-muted hover:text-red-600">
-                      <Trash2 className="h-[15px] w-[15px]" />
-                    </button>
-                  </form>
-                </div>
-              )}
             />
           )}
           <div className="p-2">
