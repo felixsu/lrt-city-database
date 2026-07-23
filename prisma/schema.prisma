@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+}
+
+model AdminUser {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  role          AdminRole @default(ADMIN)
+  promotedBy    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Building {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model User {
+  id             String   @id @default(cuid())
+  name           String
+  contactNumber  String
+  remarks        String?
+  buyDate        DateTime?
+  joinDate       DateTime?
+  buildingId     String?
+  building       Building? @relation(fields: [buildingId], references: [id])
+  ppjbs          Ppjb[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Ppjb {
+  id            String      @id @default(cuid())
+  accountNumber String
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos        PpjbPhoto[]
+  createdAt     DateTime    @default(now())
+}
+
+model PpjbPhoto {
+  id        String   @id @default(cuid())
+  ppjbId    String
+  ppjb      Ppjb     @relation(fields: [ppjbId], references: [id], onDelete: Cascade)
+  url       String
+  publicId  String
+  bytes     Int?
+  width     Int?
+  height    Int?
+  createdAt DateTime @default(now())
+}
+
+model TimelineEvent {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  pictureUrl   String?
+  picturePublicId String?
+  eventDate    DateTime?
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model HomeContent {
+  id              Int      @id @default(1)
+  aboutMarkdown   String   @default("")
+  howToJoinMarkdown String @default("")
+  updatedAt       DateTime @updatedAt
+}
