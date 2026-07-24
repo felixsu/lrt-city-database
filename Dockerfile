@@ -9,8 +9,7 @@ RUN npm ci
 FROM deps AS build
 WORKDIR /app
 COPY . .
-RUN --mount=type=secret,id=database_url \
-    DATABASE_URL="$(cat /run/secrets/database_url)" npm run build
+RUN npm run build
 
 FROM node:20-alpine AS runner
 RUN apk add --no-cache openssl libssl3

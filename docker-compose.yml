@@ -2,8 +2,6 @@ services:
   app:
     build:
       context: .
-      secrets:
-        - database_url
     container_name: lrt-city-database
     restart: unless-stopped
     ports:
@@ -21,7 +19,3 @@ services:
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
       CLOUDINARY_UPLOAD_PRESET: ${CLOUDINARY_UPLOAD_PRESET}
       NODE_ENV: production
-
-secrets:
-  database_url:
-    environment: DATABASE_URL

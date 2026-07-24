@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { TimelineMediaCarousel } from "@/components/timeline-media-carousel";
 
+export const dynamic = "force-dynamic";
+
 function hostname(url: string) {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
