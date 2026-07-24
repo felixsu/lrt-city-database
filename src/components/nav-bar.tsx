@@ -17,7 +17,7 @@ export async function NavBar() {
             Home
           </Link>
           <Link href="/users" className="text-white/70 transition-colors hover:text-white">
-            Users
+            Consumers
           </Link>
           {isAdmin && (
             <Link href="/admin" className="text-white/70 transition-colors hover:text-white">

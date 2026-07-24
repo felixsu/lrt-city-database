@@ -23,11 +23,13 @@ export function TimelineMediaGallery({
   media,
   addAction,
   deleteAction,
+  maxUploadMb,
 }: {
   timelineEventId: string;
   media: MediaItem[];
   addAction: AddMediaAction;
   deleteAction: (formData: FormData) => void;
+  maxUploadMb: number;
 }) {
   const [state, formAction, pending] = useActionState<TimelineMediaFormState, FormData>(
     addAction,
@@ -80,7 +82,7 @@ export function TimelineMediaGallery({
             {pending ? "Uploading..." : "Add media"}
           </Button>
         </div>
-        <p className="text-xs text-muted">Photos and videos, up to 10MB each.</p>
+        <p className="text-xs text-muted">Photos and videos, up to {maxUploadMb}MB each.</p>
         {state.error && <p className="text-xs text-red-600">{state.error}</p>}
       </form>
     </div>

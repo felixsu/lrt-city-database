@@ -127,6 +127,13 @@ model HomeContent {
   updatedAt         DateTime @updatedAt
 }
 
+model UploadSettings {
+  id                  Int      @id @default(1)
+  timelineMaxUploadMb Int      @default(10)
+  ppjbMaxUploadMb     Int      @default(10)
+  updatedAt           DateTime @updatedAt
+}
+
 model MediaLink {
   id          String   @id @default(cuid())
   url         String

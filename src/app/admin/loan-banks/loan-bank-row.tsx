@@ -44,7 +44,7 @@ export function LoanBankRow({
     <div className="flex items-center justify-between p-4">
       <div>
         <p className="text-sm font-medium text-ink">{loanBank.name}</p>
-        <p className="font-mono text-xs text-muted">{loanBank._count.users} residents</p>
+        <p className="font-mono text-xs text-muted">{loanBank._count.users} consumers</p>
       </div>
       <div className="flex items-center gap-4">
         <button

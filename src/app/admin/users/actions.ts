@@ -6,7 +6,8 @@ import { z } from "zod";
 import { Prisma, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
-import { uploadCompressedImage, deleteImage } from "@/lib/cloudinary";
+import { uploadCompressedImage, deleteImage, findOversizedFile } from "@/lib/cloudinary";
+import { getUploadSettings } from "@/lib/upload-settings";
 import { UNIT_TYPES, type UnitType } from "@/lib/user-enums";
 
 export type UserFormState = { error: string | null };
@@ -34,9 +35,14 @@ function parsePaymentStatus(value: FormDataEntryValue | null): PaymentStatus {
   return String(value ?? "") === "PAID_OFF" ? PaymentStatus.PAID_OFF : PaymentStatus.IN_PROGRESS;
 }
 
-async function uploadPhotoIfPresent(formData: FormData, field: string, folder: string) {
+function getFileField(formData: FormData, field: string): File | null {
   const file = formData.get(field);
-  if (!(file instanceof File) || file.size === 0) return null;
+  return file instanceof File && file.size > 0 ? file : null;
+}
+
+async function uploadPhotoIfPresent(formData: FormData, field: string, folder: string) {
+  const file = getFileField(formData, field);
+  if (!file) return null;
 
   const arrayBuffer = await file.arrayBuffer();
   const base64 = Buffer.from(arrayBuffer).toString("base64");
@@ -168,6 +174,14 @@ export async function createOwnershipDocument(
   const sppuNumber = String(formData.get("sppuNumber") ?? "").trim() || null;
   const sppuDate = parseDate(formData.get("sppuDate"));
 
+  const settings = await getUploadSettings();
+  const maxBytes = settings.ppjbMaxUploadMb * 1024 * 1024;
+  const providedFiles = [getFileField(formData, "photo"), getFileField(formData, "sppuImage")].filter(
+    (file): file is File => file !== null,
+  );
+  const oversizedError = findOversizedFile(providedFiles, maxBytes);
+  if (oversizedError) return { error: oversizedError };
+
   let photo: Awaited<ReturnType<typeof uploadPhotoIfPresent>> = null;
   let sppuImage: Awaited<ReturnType<typeof uploadPhotoIfPresent>> = null;
   let warning: string | null = null;
@@ -252,6 +266,13 @@ export async function updateOwnershipDocument(
   const sppuNumber = String(formData.get("sppuNumber") ?? "").trim() || null;
   const sppuDate = parseDate(formData.get("sppuDate"));
 
+  const settings = await getUploadSettings();
+  const sppuImageFile = getFileField(formData, "sppuImage");
+  if (sppuImageFile) {
+    const oversizedError = findOversizedFile([sppuImageFile], settings.ppjbMaxUploadMb * 1024 * 1024);
+    if (oversizedError) return { error: oversizedError };
+  }
+
   const existing = await prisma.ownershipDocument.findUnique({ where: { id } });
   if (!existing) return { error: "Ownership document not found." };
 
@@ -328,6 +349,13 @@ export async function addOwnershipDocumentPhoto(
   const ownershipDocumentId = String(formData.get("ownershipDocumentId") ?? "");
   const userId = String(formData.get("userId") ?? "");
   if (!ownershipDocumentId) return { error: "Missing ownership document reference." };
+
+  const photoFile = getFileField(formData, "photo");
+  if (!photoFile) return { error: "Choose a photo to upload." };
+
+  const settings = await getUploadSettings();
+  const oversizedError = findOversizedFile([photoFile], settings.ppjbMaxUploadMb * 1024 * 1024);
+  if (oversizedError) return { error: oversizedError };
 
   let photo: Awaited<ReturnType<typeof uploadPhotoIfPresent>>;
   try {

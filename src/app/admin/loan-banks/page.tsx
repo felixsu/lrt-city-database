@@ -18,7 +18,7 @@ export default async function AdminLoanBanksPage() {
         <div>
           <h1 className="text-[26px]">Loan banks</h1>
           <p className="mt-1 text-sm text-muted">
-            Manage the list of banks available when recording a resident&apos;s loan.
+            Manage the list of banks available when recording a consumer&apos;s loan.
           </p>
         </div>
         <form action={addLoanBank} className="flex gap-2">

@@ -12,16 +12,16 @@ export default async function NewUserPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-[26px]">Add resident</h1>
+      <h1 className="text-[26px]">Add consumer</h1>
 
       <UserForm
         action={createUser}
         buildings={buildings}
         loanBanks={loanBanks}
-        submitLabel="Create user"
+        submitLabel="Create consumer"
       />
       <p className="-mt-4 text-xs text-muted">
-        You&apos;ll be able to add ownership documents and photos after creating the user.
+        You&apos;ll be able to add ownership documents and photos after creating the consumer.
       </p>
     </div>
   );

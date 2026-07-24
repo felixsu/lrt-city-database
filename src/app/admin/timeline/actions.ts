@@ -4,12 +4,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
-import {
-  uploadCompressedImage,
-  uploadVideo,
-  deleteImage,
-  MAX_UPLOAD_BYTES,
-} from "@/lib/cloudinary";
+import { uploadCompressedImage, uploadVideo, deleteImage, findOversizedFile } from "@/lib/cloudinary";
+import { getUploadSettings } from "@/lib/upload-settings";
 
 export type TimelineMediaFormState = { error: string | null };
 
@@ -17,12 +13,6 @@ function collectMediaFiles(formData: FormData): File[] {
   return formData
     .getAll("media")
     .filter((entry): entry is File => entry instanceof File && entry.size > 0);
-}
-
-/** Returns an error message if any file exceeds the per-file cap, else null. */
-function findOversizedFile(files: File[]): string | null {
-  const tooBig = files.find((file) => file.size > MAX_UPLOAD_BYTES);
-  return tooBig ? `"${tooBig.name}" is larger than 10MB. Please choose a smaller file.` : null;
 }
 
 async function uploadMediaFile(file: File) {
@@ -73,7 +63,8 @@ export async function createTimelineEvent(
   if (!title) return { error: "Title is required." };
 
   const files = collectMediaFiles(formData);
-  const oversizedError = findOversizedFile(files);
+  const settings = await getUploadSettings();
+  const oversizedError = findOversizedFile(files, settings.timelineMaxUploadMb * 1024 * 1024);
   if (oversizedError) return { error: oversizedError };
 
   const event = await prisma.timelineEvent.create({
@@ -160,7 +151,8 @@ export async function addTimelineEventMedia(
   const files = collectMediaFiles(formData);
   if (files.length === 0) return { error: "Choose at least one photo or video to upload." };
 
-  const oversizedError = findOversizedFile(files);
+  const settings = await getUploadSettings();
+  const oversizedError = findOversizedFile(files, settings.timelineMaxUploadMb * 1024 * 1024);
   if (oversizedError) return { error: oversizedError };
 
   await createMediaRows(timelineEventId, files);
