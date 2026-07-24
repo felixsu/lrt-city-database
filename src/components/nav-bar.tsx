@@ -6,7 +6,7 @@ export async function NavBar() {
   const isAdmin = session?.user?.isAdmin;
 
   return (
-    <header className="bg-ink text-white">
+    <header className="sticky top-0 z-30 bg-ink text-white">
       <div className="mx-auto flex max-w-[1120px] items-center justify-between px-6 py-4 md:px-8">
         <Link href="/" className="font-serif text-lg text-white">
           LRT City <span className="text-accent">●</span>

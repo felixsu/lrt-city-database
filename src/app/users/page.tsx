@@ -1,10 +1,7 @@
-import Image from "next/image";
-import Link from "next/link";
-import { Lock, TriangleAlert } from "lucide-react";
+import { Lock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { maskContactNumber, maskName } from "@/lib/mask";
 import { PublicShell } from "@/components/public-shell";
-import { UNIT_TYPE_LABELS, type UnitType } from "@/lib/user-enums";
+import { ConsumerTabs, type ConsumerGroup } from "./consumer-tabs";
 
 export default async function UsersPage({
   searchParams,
@@ -12,36 +9,29 @@ export default async function UsersPage({
   searchParams: Promise<{ building?: string; q?: string }>;
 }) {
   const { building: buildingFilter, q } = await searchParams;
-  const activeBuilding = buildingFilter && buildingFilter !== "all" ? buildingFilter : "all";
 
-  const [documents, buildings] = await Promise.all([
-    prisma.ownershipDocument.findMany({
-      where: {
-        ...(activeBuilding !== "all" ? { user: { buildingId: activeBuilding } } : {}),
-        ...(q
-          ? {
-              OR: [
-                { user: { name: { contains: q, mode: "insensitive" } } },
-                { unitNumber: { contains: q, mode: "insensitive" } },
-                { accountNumber: { contains: q, mode: "insensitive" } },
-              ],
-            }
-          : {}),
-      },
-      include: {
-        user: { include: { building: true } },
-        photos: true,
-      },
-      orderBy: [
-        { user: { building: { name: "asc" } } },
-        { user: { name: "asc" } },
-        { createdAt: "asc" },
-      ],
-    }),
-    prisma.building.findMany({ orderBy: { name: "asc" } }),
-  ]);
+  const documents = await prisma.ownershipDocument.findMany({
+    where: q
+      ? {
+          OR: [
+            { user: { name: { contains: q, mode: "insensitive" } } },
+            { unitNumber: { contains: q, mode: "insensitive" } },
+            { accountNumber: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : undefined,
+    include: {
+      user: { include: { building: true } },
+      photos: true,
+    },
+    orderBy: [
+      { user: { building: { name: "asc" } } },
+      { user: { name: "asc" } },
+      { createdAt: "asc" },
+    ],
+  });
 
-  const groups: { key: string; name: string; documents: typeof documents }[] = [];
+  const groups: ConsumerGroup[] = [];
   for (const doc of documents) {
     const key = doc.user.buildingId ?? "unassigned";
     const name = doc.user.building?.name ?? "Unassigned";
@@ -53,13 +43,15 @@ export default async function UsersPage({
     group.documents.push(doc);
   }
 
-  function buildingHref(buildingId: string | "all") {
-    const params = new URLSearchParams();
-    if (buildingId !== "all") params.set("building", buildingId);
-    if (q) params.set("q", q);
-    const qs = params.toString();
-    return qs ? `/users?${qs}` : "/users";
-  }
+  const defaultGroup = groups.reduce<ConsumerGroup | undefined>(
+    (biggest, group) =>
+      !biggest || group.documents.length > biggest.documents.length ? group : biggest,
+    undefined,
+  );
+  const initialKey =
+    (buildingFilter && groups.some((g) => g.key === buildingFilter) ? buildingFilter : undefined) ??
+    defaultGroup?.key ??
+    "";
 
   return (
     <PublicShell>
@@ -76,10 +68,7 @@ export default async function UsersPage({
           stay redacted here.
         </p>
 
-        <form className="mb-4 flex flex-wrap gap-2" method="GET">
-          {activeBuilding !== "all" && (
-            <input type="hidden" name="building" value={activeBuilding} />
-          )}
+        <form className="mb-8 flex flex-wrap gap-2" method="GET">
           <input
             type="text"
             name="q"
@@ -95,112 +84,10 @@ export default async function UsersPage({
           </button>
         </form>
 
-        <div className="mb-8 flex flex-wrap gap-2">
-          <Link
-            href={buildingHref("all")}
-            className={`rounded-full border border-accent px-4 py-1.5 text-sm font-medium ${
-              activeBuilding === "all" ? "bg-ink text-white" : "bg-white text-ink"
-            }`}
-          >
-            All
-          </Link>
-          {buildings.map((building) => (
-            <Link
-              key={building.id}
-              href={buildingHref(building.id)}
-              className={`rounded-full border border-accent px-4 py-1.5 text-sm font-medium ${
-                activeBuilding === building.id ? "bg-ink text-white" : "bg-white text-ink"
-              }`}
-            >
-              {building.name}
-            </Link>
-          ))}
-        </div>
-
         {groups.length === 0 ? (
           <p className="text-sm text-muted">No units match.</p>
         ) : (
-          groups.map((group) => (
-            <div key={group.key} className="mb-8">
-              <div className="mb-3.5 flex items-baseline gap-2.5 border-b border-hairline pb-2.5">
-                <h2 className="font-sans text-[17px] font-medium text-ink">{group.name}</h2>
-                <span className="font-mono text-xs text-muted">
-                  {group.documents.length} unit{group.documents.length === 1 ? "" : "s"}
-                </span>
-              </div>
-
-              {group.documents.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="grid grid-cols-1 gap-4 border-b border-hairline-soft py-4 sm:grid-cols-[0.9fr_0.7fr_1fr_1.3fr_1.3fr_1.2fr]"
-                >
-                  <div>
-                    <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
-                      Name
-                    </div>
-                    <div className="font-mono text-sm text-ink">{maskName(doc.user.name)}</div>
-                  </div>
-                  <div>
-                    <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
-                      Unit
-                    </div>
-                    <div className="font-mono text-sm text-ink">{doc.unitNumber ?? "—"}</div>
-                  </div>
-                  <div>
-                    <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
-                      Contact
-                    </div>
-                    <div className="font-mono text-sm text-ink">
-                      {maskContactNumber(doc.user.contactNumber)}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
-                      Unit type
-                    </div>
-                    <div className="font-mono text-sm text-ink">
-                      {doc.unitType ? UNIT_TYPE_LABELS[doc.unitType as UnitType] : "—"}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
-                      PPJB / SPPU
-                    </div>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {doc.accountNumber ? (
-                        <span className="rounded-md border border-hairline bg-surface-soft px-2 py-0.5 font-mono text-xs text-ink">
-                          {doc.accountNumber}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] text-accent-strong">
-                          <TriangleAlert className="h-2.5 w-2.5" /> No PPJB
-                        </span>
-                      )}
-                      {!doc.sppuNumber && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] text-accent-strong">
-                          <TriangleAlert className="h-2.5 w-2.5" /> No SPPU
-                        </span>
-                      )}
-                      {doc.photos.slice(0, 2).map((photo) => (
-                        <div
-                          key={photo.id}
-                          className="relative h-[18px] w-[18px] overflow-hidden rounded-sm border border-hairline"
-                        >
-                          <Image src={photo.url} alt="" fill className="object-cover" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
-                      Remarks
-                    </div>
-                    <div className="text-[13px] text-muted">{doc.user.remarks || "—"}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))
+          <ConsumerTabs groups={groups} initialKey={initialKey} />
         )}
       </div>
     </PublicShell>
