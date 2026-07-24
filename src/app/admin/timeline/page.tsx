@@ -8,7 +8,11 @@ import { deleteTimelineEvent, reorderTimelineEvents } from "./actions";
 
 function formatEventDate(date: Date | null) {
   if (!date) return "—";
-  return new Intl.DateTimeFormat("en-GB", { year: "numeric", month: "short" }).format(date);
+  return new Intl.DateTimeFormat("en-GB", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(date);
 }
 
 export default async function AdminTimelinePage() {

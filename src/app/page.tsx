@@ -18,7 +18,11 @@ function hostname(url: string) {
 
 function formatEventDate(date: Date | null) {
   if (!date) return null;
-  return new Intl.DateTimeFormat("en-GB", { year: "numeric", month: "short" }).format(date);
+  return new Intl.DateTimeFormat("en-GB", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(date);
 }
 
 export default async function HomePage() {

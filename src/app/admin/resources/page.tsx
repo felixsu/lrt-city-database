@@ -37,7 +37,7 @@ export default async function AdminResourcesPage() {
         <textarea
           name="description"
           required
-          placeholder="Description"
+          placeholder="Description (Markdown supported)"
           rows={2}
           className="rounded-lg border border-hairline bg-canvas px-3 py-2 text-sm outline-none focus:border-accent"
         />
@@ -84,7 +84,7 @@ export default async function AdminResourcesPage() {
                       <textarea
                         name="description"
                         defaultValue={resource.description}
-                        placeholder="Description"
+                        placeholder="Description (Markdown supported)"
                         rows={2}
                         className="rounded-lg border border-hairline bg-canvas px-3 py-1.5 text-sm outline-none focus:border-accent"
                       />
