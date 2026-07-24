@@ -10,7 +10,7 @@ export function MarkdownContent({
   variant,
 }: {
   markdown: string;
-  variant?: "steps" | "editorial";
+  variant?: "steps" | "editorial" | "compact";
 }) {
   if (!markdown.trim()) {
     return <p className="text-sm text-muted-soft">No content yet.</p>;
@@ -18,7 +18,11 @@ export function MarkdownContent({
 
   return (
     <div
-      className="prose max-w-none prose-headings:font-serif prose-headings:text-ink prose-p:font-serif prose-p:text-[17px] prose-p:leading-[1.7] prose-p:text-body prose-li:text-body prose-strong:text-ink prose-a:text-link prose-code:text-ink"
+      className={
+        variant === "compact"
+          ? "prose prose-sm max-w-none prose-headings:font-serif prose-headings:text-ink prose-p:text-[13px] prose-p:leading-relaxed prose-p:text-muted prose-li:text-[13px] prose-li:text-muted prose-strong:text-ink prose-a:text-link prose-code:text-ink"
+          : "prose max-w-none prose-headings:font-serif prose-headings:text-ink prose-p:font-serif prose-p:text-[17px] prose-p:leading-[1.7] prose-p:text-body prose-li:text-body prose-strong:text-ink prose-a:text-link prose-code:text-ink"
+      }
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}

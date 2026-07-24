@@ -2,6 +2,7 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { PublicShell } from "@/components/public-shell";
 import { Card } from "@/components/ui/card";
+import { MarkdownContent } from "@/components/markdown-content";
 
 export const dynamic = "force-dynamic";
 
@@ -41,9 +42,7 @@ export default async function ResourcesPage() {
                   <h3 className="text-[15px] leading-snug font-medium text-ink">
                     {resource.title}
                   </h3>
-                  <p className="text-[13px] leading-relaxed text-muted">
-                    {resource.description}
-                  </p>
+                  <MarkdownContent markdown={resource.description} variant="compact" />
                 </div>
               </Card>
             ))}
