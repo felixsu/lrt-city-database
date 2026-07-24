@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { getHomeContent } from "@/lib/home-content";
 import { MarkdownContent } from "@/components/markdown-content";
@@ -7,6 +8,12 @@ import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { TimelineMediaCarousel } from "@/components/timeline-media-carousel";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  description:
+    "Perkumpulan konsumen LRT City Tebet — timeline projek, dokumen PPJB, dan berita terbaru seputar LRT City yang dikembangkan oleh PT ADCP, bagian dari Adhi Karya Group.",
+};
 
 function hostname(url: string) {
   try {
@@ -37,8 +44,32 @@ export default async function HomePage() {
     }),
   ]);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        name: "LRT City Consumer Community",
+        alternateName: ["LRT City", "ADCP LRT City Tebet"],
+        url: "https://lrtcity.lixionary.com",
+        logo: "https://lrtcity.lixionary.com/logo.png",
+        description:
+          "Komunitas konsumen LRT City Tebet, projek yang dikembangkan oleh PT ADCP (Adhi Commuter Properti), bagian dari Adhi Karya Group.",
+      },
+      {
+        "@type": "WebSite",
+        name: "LRT City Consumer Community",
+        url: "https://lrtcity.lixionary.com",
+      },
+    ],
+  };
+
   return (
     <PublicShell>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="h-1.5 bg-accent" />
       <div className="bg-ink px-6 py-14 md:px-16">
         <div className="mx-auto max-w-[1320px]">

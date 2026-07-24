@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { Lock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { PublicShell } from "@/components/public-shell";
 import { ConsumerTabs, type ConsumerGroup } from "./consumer-tabs";
+
+export const metadata: Metadata = {
+  title: "Consumer Database",
+  robots: { index: false, follow: false },
+};
 
 export default async function UsersPage({
   searchParams,

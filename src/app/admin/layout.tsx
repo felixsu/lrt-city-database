@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { RolePill } from "@/components/ui/pill";
 import { AdminSidebarNav } from "./admin-sidebar-nav";
 import { AdminHeaderTitle } from "./admin-header-title";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 function initials(name: string | null | undefined, email: string | null | undefined) {
   const source = name?.trim() || email || "";

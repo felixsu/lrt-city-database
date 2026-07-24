@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { PublicShell } from "@/components/public-shell";
@@ -5,6 +6,13 @@ import { Card } from "@/components/ui/card";
 import { MarkdownContent } from "@/components/markdown-content";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Resources",
+  description:
+    "Guides, references, and other resources the LRT City Tebet consumer community has gathered — PPJB, ownership documents, and ADCP updates.",
+  alternates: { canonical: "/resources" },
+};
 
 export default async function ResourcesPage() {
   const resources = await prisma.resource.findMany({
