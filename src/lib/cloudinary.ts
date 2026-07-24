@@ -38,6 +38,7 @@ export async function uploadCompressedImage(
 
   for (const quality of QUALITY_STEPS) {
     const result: UploadApiResponse = await cloudinary.uploader.upload(dataUri, {
+      upload_preset: process.env.CLOUDINARY_UPLOAD_PRESET,
       // Only set `folder` on the first attempt. On retries, `public_id` is
       // already fully-qualified from the previous response — in Dynamic
       // Folder Mode, re-passing `folder` alongside it prepends the folder
@@ -68,6 +69,7 @@ export async function uploadCompressedImage(
  */
 export async function uploadVideo(dataUri: string, folder: string): Promise<UploadApiResponse> {
   return cloudinary.uploader.upload(dataUri, {
+    upload_preset: process.env.CLOUDINARY_UPLOAD_PRESET,
     resource_type: "video",
     folder,
     overwrite: true,

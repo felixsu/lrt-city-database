@@ -16,6 +16,9 @@ export async function NavBar() {
           <Link href="/" className="text-white/70 transition-colors hover:text-white">
             Home
           </Link>
+          <Link href="/resources" className="text-white/70 transition-colors hover:text-white">
+            Resources
+          </Link>
           <Link href="/users" className="text-white/70 transition-colors hover:text-white">
             Consumers
           </Link>

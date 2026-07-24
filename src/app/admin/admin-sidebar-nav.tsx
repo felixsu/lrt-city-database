@@ -10,6 +10,7 @@ import {
   Landmark,
   Milestone,
   Newspaper,
+  BookOpen,
   Shield,
   Settings,
 } from "lucide-react";
@@ -22,6 +23,7 @@ export const ADMIN_SECTIONS = [
   { segment: "loan-banks", href: "/admin/loan-banks", label: "Loan banks", icon: Landmark },
   { segment: "timeline", href: "/admin/timeline", label: "Timeline", icon: Milestone },
   { segment: "media", href: "/admin/media", label: "Media", icon: Newspaper },
+  { segment: "resources", href: "/admin/resources", label: "Resources", icon: BookOpen },
   { segment: "admins", href: "/admin/admins", label: "Admins", icon: Shield },
   { segment: "settings", href: "/admin/settings", label: "Settings", icon: Settings },
 ];
