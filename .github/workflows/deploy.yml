@@ -63,6 +63,8 @@ jobs:
             echo "CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}" >> .env
             echo "CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}" >> .env
             echo "CLOUDINARY_UPLOAD_PRESET=${{ secrets.CLOUDINARY_UPLOAD_PRESET }}" >> .env
+            echo "NEXT_PUBLIC_HCAPTCHA_SITE_KEY=${{ secrets.HCAPTCHA_SITE_KEY }}" >> .env
+            echo "HCAPTCHA_SECRET_KEY=${{ secrets.HCAPTCHA_SECRET_KEY }}" >> .env
             echo "APP_PORT=8530" >> .env
             echo "NODE_ENV=production" >> .env
             docker compose -f docker-compose.production.yml pull -q

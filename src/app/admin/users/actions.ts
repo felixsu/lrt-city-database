@@ -2,30 +2,19 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
-import { Prisma, PaymentStatus } from "@prisma/client";
+import { PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { uploadCompressedImage, deleteImage, findOversizedFile } from "@/lib/cloudinary";
 import { getUploadSettings } from "@/lib/upload-settings";
 import { UNIT_TYPES, type UnitType } from "@/lib/user-enums";
+import {
+  unitNumberSchema,
+  isUniqueConstraintError,
+  uniqueConstraintField,
+} from "@/lib/ownership-validation";
 
 export type UserFormState = { error: string | null };
-
-const unitNumberSchema = z
-  .string()
-  .trim()
-  .regex(/^\d{2}-\d{2}$/, "Unit number must be in the format 05-18 (2-digit floor, 2-digit room).");
-
-function isUniqueConstraintError(err: unknown) {
-  return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
-}
-
-function uniqueConstraintField(err: unknown): string | null {
-  if (!(err instanceof Prisma.PrismaClientKnownRequestError) || err.code !== "P2002") return null;
-  const target = err.meta?.target;
-  return Array.isArray(target) ? String(target[0]) : typeof target === "string" ? target : null;
-}
 
 function parseDate(value: FormDataEntryValue | null): Date | null {
   const str = String(value ?? "");

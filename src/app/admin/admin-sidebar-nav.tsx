@@ -5,6 +5,7 @@ import { useSelectedLayoutSegment } from "next/navigation";
 import {
   LayoutDashboard,
   FileText,
+  UserPlus,
   Users,
   Building2,
   Landmark,
@@ -18,6 +19,7 @@ import {
 export const ADMIN_SECTIONS = [
   { segment: null, href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { segment: "home", href: "/admin/home", label: "Home content", icon: FileText },
+  { segment: "leads", href: "/admin/leads", label: "Leads", icon: UserPlus },
   { segment: "users", href: "/admin/users", label: "Consumers", icon: Users },
   { segment: "buildings", href: "/admin/buildings", label: "Buildings", icon: Building2 },
   { segment: "loan-banks", href: "/admin/loan-banks", label: "Loan banks", icon: Landmark },

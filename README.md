@@ -57,6 +57,10 @@ cp .env.example .env
   from your Cloudinary dashboard.
 - `CLOUDINARY_UPLOAD_PRESET` — name of an upload preset configured in your
   Cloudinary dashboard (Settings → Upload), applied on every upload.
+- `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` / `HCAPTCHA_SECRET_KEY` — from
+  dashboard.hcaptcha.com, used to spam-guard the public registration form.
+  `.env.example` ships hCaptcha's official test keys (always pass) — replace
+  with your real keys before deploying to production.
 
 ### 3. Set up the database
 
