@@ -55,6 +55,8 @@ cp .env.example .env
   (e.g. `http://localhost:3000/api/auth/callback/google` for local dev).
 - `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` —
   from your Cloudinary dashboard.
+- `CLOUDINARY_UPLOAD_PRESET` — name of an upload preset configured in your
+  Cloudinary dashboard (Settings → Upload), applied on every upload.
 
 ### 3. Set up the database
 

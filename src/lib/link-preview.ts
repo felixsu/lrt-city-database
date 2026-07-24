@@ -10,6 +10,14 @@ const FETCH_TIMEOUT_MS = 8000;
 
 /** Fetches a URL and extracts Open Graph / basic HTML metadata for a link preview card. */
 export async function fetchLinkPreview(url: string): Promise<LinkPreview> {
+  const videoId = extractYouTubeVideoId(url);
+  if (videoId) {
+    const preview = await fetchYouTubePreview(videoId);
+    if (preview) return preview;
+    // oEmbed failed (private/deleted video, network error, etc.) — fall through
+    // to the generic scrape below as a last-resort fallback.
+  }
+
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -37,6 +45,57 @@ export async function fetchLinkPreview(url: string): Promise<LinkPreview> {
     };
   } catch {
     return EMPTY_PREVIEW;
+  }
+}
+
+const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"]);
+const YOUTUBE_ID_PATTERN = /^[\w-]{11}$/;
+
+/** Extracts an 11-char YouTube video ID from watch/shorts/embed/youtu.be URLs, or null if not a YouTube video URL. */
+function extractYouTubeVideoId(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+
+  if (!YOUTUBE_HOSTS.has(parsed.hostname)) return null;
+
+  let candidate: string | null = null;
+  if (parsed.hostname === "youtu.be") {
+    candidate = parsed.pathname.split("/").filter(Boolean)[0] ?? null;
+  } else if (parsed.pathname === "/watch") {
+    candidate = parsed.searchParams.get("v");
+  } else {
+    const match = parsed.pathname.match(/^\/(?:shorts|embed)\/([^/]+)/);
+    candidate = match ? match[1] : null;
+  }
+
+  return candidate && YOUTUBE_ID_PATTERN.test(candidate) ? candidate : null;
+}
+
+/** Fetches title/thumbnail for a YouTube video via the official oEmbed endpoint. Returns null on any failure. */
+async function fetchYouTubePreview(videoId: string): Promise<LinkPreview | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+    const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(watchUrl)}&format=json`;
+    const res = await fetch(oembedUrl, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    return {
+      title: typeof data.title === "string" ? data.title : null,
+      description: null,
+      imageUrl: typeof data.thumbnail_url === "string" ? data.thumbnail_url : null,
+    };
+  } catch {
+    return null;
   }
 }
 
