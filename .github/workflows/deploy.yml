@@ -26,7 +26,7 @@ jobs:
           file: ./Dockerfile
           push: true
           secrets: |
-            "database_url=${{ secrets.DATABASE_URL }}"
+            database_url=${{ secrets.DATABASE_URL }}
           tags: |
             ghcr.io/felixsu/lrt-city-database:latest
             ghcr.io/felixsu/lrt-city-database:${{ github.sha }}
