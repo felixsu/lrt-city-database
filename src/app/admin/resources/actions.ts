@@ -41,6 +41,8 @@ export async function addResource(formData: FormData) {
       description,
       imageUrl: uploaded?.secure_url,
       imagePublicId: uploaded?.public_id,
+      imageWidth: uploaded?.width,
+      imageHeight: uploaded?.height,
     },
   });
 
@@ -79,7 +81,14 @@ export async function updateResource(formData: FormData) {
       title,
       description,
       order: Number.isFinite(order) ? order : 0,
-      ...(uploaded ? { imageUrl: uploaded.secure_url, imagePublicId: uploaded.public_id } : {}),
+      ...(uploaded
+        ? {
+            imageUrl: uploaded.secure_url,
+            imagePublicId: uploaded.public_id,
+            imageWidth: uploaded.width,
+            imageHeight: uploaded.height,
+          }
+        : {}),
     },
   });
 

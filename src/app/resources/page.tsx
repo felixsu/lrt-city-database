@@ -22,24 +22,26 @@ export default async function ResourcesPage() {
         {resources.length === 0 ? (
           <p className="text-sm text-muted">No resources yet.</p>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="columns-1 gap-6 sm:columns-2 lg:columns-3">
             {resources.map((resource) => (
-              <Card key={resource.id} className="flex h-full flex-col overflow-hidden">
-                <div className="relative h-[120px] w-full bg-gradient-to-br from-[#e8f2f1] to-[#d7e9e8]">
-                  {resource.imageUrl && (
-                    <Image
-                      src={resource.imageUrl}
-                      alt=""
-                      fill
-                      className="object-cover"
-                    />
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col gap-2.5 p-[18px]">
+              <Card
+                key={resource.id}
+                className="mb-6 break-inside-avoid overflow-hidden"
+              >
+                {resource.imageUrl && (
+                  <Image
+                    src={resource.imageUrl}
+                    alt=""
+                    width={resource.imageWidth ?? 800}
+                    height={resource.imageHeight ?? 600}
+                    className="h-auto w-full"
+                  />
+                )}
+                <div className="flex flex-col gap-2.5 p-[18px]">
                   <h3 className="text-[15px] leading-snug font-medium text-ink">
                     {resource.title}
                   </h3>
-                  <p className="line-clamp-2 text-[13px] leading-relaxed text-muted">
+                  <p className="text-[13px] leading-relaxed text-muted">
                     {resource.description}
                   </p>
                 </div>
