@@ -20,9 +20,42 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = "https://lrtcity.lixionary.com";
+const SITE_DESCRIPTION =
+  "Komunitas konsumen LRT City Tebet — informasi resmi seputar unit, PPJB, dan progres projek LRT City yang dikembangkan oleh PT ADCP (Adhi Commuter Properti), bagian dari Adhi Karya Group.";
+
 export const metadata: Metadata = {
-  title: "LRT City Consumer Community",
-  description: "Customer database CMS for LRT City Consumer Community",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "LRT City Consumer Community | ADCP LRT City Tebet",
+    template: "%s | LRT City Consumer Community",
+  },
+  description: SITE_DESCRIPTION,
+  keywords: [
+    "LRT City",
+    "LRT City Tebet",
+    "LRT City projek",
+    "ADCP",
+    "Adhi Karya",
+    "PPJB LRT City",
+    "konsumen LRT City",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    url: SITE_URL,
+    siteName: "LRT City Consumer Community",
+    title: "LRT City Consumer Community | ADCP LRT City Tebet",
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LRT City Consumer Community | ADCP LRT City Tebet",
+    description: SITE_DESCRIPTION,
+  },
+  verification: {
+    google: "QwClC5cC7iyTtUzBNFaBceltB4LnKj6S9UQnW-epPTo",
+  },
 };
 
 export default function RootLayout({
@@ -32,7 +65,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="id"
       className={`${cormorant.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-canvas font-sans text-body">
