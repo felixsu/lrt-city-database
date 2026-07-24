@@ -7,7 +7,7 @@ export async function NavBar() {
 
   return (
     <header className="sticky top-0 z-30 bg-ink text-white">
-      <div className="mx-auto flex max-w-[1120px] items-center justify-between px-6 py-4 md:px-8">
+      <div className="mx-auto flex max-w-[1320px] items-center justify-between px-6 py-4 md:px-8">
         <Link href="/" className="font-serif text-lg text-white">
           LRT City <span className="text-accent">●</span>
         </Link>
