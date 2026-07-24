@@ -56,7 +56,9 @@ export function MarkdownContent({
                 li(props: ComponentPropsWithoutRef<"li">) {
                   const { children } = props;
                   return (
-                    <li className="text-[15px] leading-relaxed text-body">{children}</li>
+                    <li className="font-serif text-[17px] leading-[1.7] text-body">
+                      {children}
+                    </li>
                   );
                 },
               }
