@@ -25,6 +25,8 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
+          build-args: |
+            NEXT_PUBLIC_HCAPTCHA_SITE_KEY=${{ secrets.HCAPTCHA_SITE_KEY }}
           tags: |
             ghcr.io/felixsu/lrt-city-database:latest
             ghcr.io/felixsu/lrt-city-database:${{ github.sha }}
