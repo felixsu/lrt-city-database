@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Lock } from "lucide-react";
+import { Lock, TriangleAlert } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { maskContactNumber, maskName } from "@/lib/mask";
 import { PublicShell } from "@/components/public-shell";
@@ -164,12 +164,23 @@ export default async function UsersPage({
                   </div>
                   <div>
                     <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
-                      PPJB number
+                      PPJB / SPPU
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-md border border-hairline bg-surface-soft px-2 py-0.5 font-mono text-xs text-ink">
-                        {doc.accountNumber}
-                      </span>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {doc.accountNumber ? (
+                        <span className="rounded-md border border-hairline bg-surface-soft px-2 py-0.5 font-mono text-xs text-ink">
+                          {doc.accountNumber}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] text-accent-strong">
+                          <TriangleAlert className="h-2.5 w-2.5" /> No PPJB
+                        </span>
+                      )}
+                      {!doc.sppuNumber && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] text-accent-strong">
+                          <TriangleAlert className="h-2.5 w-2.5" /> No SPPU
+                        </span>
+                      )}
                       {doc.photos.slice(0, 2).map((photo) => (
                         <div
                           key={photo.id}

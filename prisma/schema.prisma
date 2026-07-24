@@ -63,7 +63,7 @@ model User {
 
 model OwnershipDocument {
   id                String   @id @default(cuid())
-  accountNumber     String
+  accountNumber     String?  @unique
   unitNumber        String?  @unique
   unitType          String?
   ppjbDate          DateTime?

@@ -21,6 +21,12 @@ function isUniqueConstraintError(err: unknown) {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
 }
 
+function uniqueConstraintField(err: unknown): string | null {
+  if (!(err instanceof Prisma.PrismaClientKnownRequestError) || err.code !== "P2002") return null;
+  const target = err.meta?.target;
+  return Array.isArray(target) ? String(target[0]) : typeof target === "string" ? target : null;
+}
+
 function parseDate(value: FormDataEntryValue | null): Date | null {
   const str = String(value ?? "");
   return str ? new Date(str) : null;
@@ -155,8 +161,8 @@ export async function createOwnershipDocument(
   await requireAdmin();
 
   const userId = String(formData.get("userId") ?? "");
-  const accountNumber = String(formData.get("accountNumber") ?? "").trim();
-  if (!userId || !accountNumber) return { error: "PPJB number is required." };
+  const accountNumber = String(formData.get("accountNumber") ?? "").trim() || null;
+  if (!userId) return { error: "Missing consumer reference." };
 
   const unitNumberResult = unitNumberSchema.safeParse(formData.get("unitNumber"));
   if (!unitNumberResult.success) {
@@ -167,7 +173,16 @@ export async function createOwnershipDocument(
 
   const existingUnit = await prisma.ownershipDocument.findFirst({ where: { unitNumber } });
   if (existingUnit) {
-    return { error: `Unit ${unitNumber} is already assigned to another document.` };
+    return { error: `Unit ${unitNumber} is already on record.` };
+  }
+
+  if (accountNumber) {
+    const existingAccountNumber = await prisma.ownershipDocument.findFirst({
+      where: { accountNumber },
+    });
+    if (existingAccountNumber) {
+      return { error: `PPJB number ${accountNumber} is already on record for another unit.` };
+    }
   }
 
   const ppjbDate = parseDate(formData.get("ppjbDate"));
@@ -189,15 +204,15 @@ export async function createOwnershipDocument(
   try {
     photo = await uploadPhotoIfPresent(formData, "photo", "lrt-city-tebet/ownership-documents");
   } catch (err) {
-    console.error("Failed to upload ownership document photo:", err);
-    warning = "Document added, but the photo failed to upload — add it separately below.";
+    console.error("Failed to upload unit ownership photo:", err);
+    warning = "Unit added, but the photo failed to upload — add it separately below.";
   }
 
   try {
     sppuImage = await uploadPhotoIfPresent(formData, "sppuImage", "lrt-city-tebet/sppu");
   } catch (err) {
     console.error("Failed to upload SPPU image:", err);
-    warning = "Document added, but the SPPU image failed to upload — try replacing it below.";
+    warning = "Unit added, but the SPPU image failed to upload — try replacing it below.";
   }
 
   try {
@@ -226,8 +241,11 @@ export async function createOwnershipDocument(
       },
     });
   } catch (err) {
+    if (uniqueConstraintField(err) === "accountNumber") {
+      return { error: `PPJB number ${accountNumber} is already on record for another unit.` };
+    }
     if (isUniqueConstraintError(err)) {
-      return { error: `Unit ${unitNumber} is already assigned to another document.` };
+      return { error: `Unit ${unitNumber} is already on record.` };
     }
     throw err;
   }
@@ -245,8 +263,8 @@ export async function updateOwnershipDocument(
 
   const id = String(formData.get("id") ?? "");
   const userId = String(formData.get("userId") ?? "");
-  const accountNumber = String(formData.get("accountNumber") ?? "").trim();
-  if (!id || !accountNumber) return { error: "PPJB number is required." };
+  const accountNumber = String(formData.get("accountNumber") ?? "").trim() || null;
+  if (!id) return { error: "Missing unit reference." };
 
   const unitNumberResult = unitNumberSchema.safeParse(formData.get("unitNumber"));
   if (!unitNumberResult.success) {
@@ -259,7 +277,16 @@ export async function updateOwnershipDocument(
     where: { unitNumber, NOT: { id } },
   });
   if (existingUnit) {
-    return { error: `Unit ${unitNumber} is already assigned to another document.` };
+    return { error: `Unit ${unitNumber} is already on record.` };
+  }
+
+  if (accountNumber) {
+    const existingAccountNumber = await prisma.ownershipDocument.findFirst({
+      where: { accountNumber, NOT: { id } },
+    });
+    if (existingAccountNumber) {
+      return { error: `PPJB number ${accountNumber} is already on record for another unit.` };
+    }
   }
 
   const ppjbDate = parseDate(formData.get("ppjbDate"));
@@ -274,7 +301,7 @@ export async function updateOwnershipDocument(
   }
 
   const existing = await prisma.ownershipDocument.findUnique({ where: { id } });
-  if (!existing) return { error: "Ownership document not found." };
+  if (!existing) return { error: "Unit not found." };
 
   let sppuImage: Awaited<ReturnType<typeof uploadPhotoIfPresent>> = null;
   let warning: string | null = null;
@@ -305,8 +332,11 @@ export async function updateOwnershipDocument(
       },
     });
   } catch (err) {
+    if (uniqueConstraintField(err) === "accountNumber") {
+      return { error: `PPJB number ${accountNumber} is already on record for another unit.` };
+    }
     if (isUniqueConstraintError(err)) {
-      return { error: `Unit ${unitNumber} is already assigned to another document.` };
+      return { error: `Unit ${unitNumber} is already on record.` };
     }
     throw err;
   }
@@ -348,7 +378,7 @@ export async function addOwnershipDocumentPhoto(
 
   const ownershipDocumentId = String(formData.get("ownershipDocumentId") ?? "");
   const userId = String(formData.get("userId") ?? "");
-  if (!ownershipDocumentId) return { error: "Missing ownership document reference." };
+  if (!ownershipDocumentId) return { error: "Missing unit reference." };
 
   const photoFile = getFileField(formData, "photo");
   if (!photoFile) return { error: "Choose a photo to upload." };
@@ -361,7 +391,7 @@ export async function addOwnershipDocumentPhoto(
   try {
     photo = await uploadPhotoIfPresent(formData, "photo", "lrt-city-tebet/ownership-documents");
   } catch (err) {
-    console.error("Failed to upload ownership document photo:", err);
+    console.error("Failed to upload unit ownership photo:", err);
     return { error: "Photo upload failed. Please try again with a smaller image." };
   }
   if (!photo) return { error: "Choose a photo to upload." };

@@ -39,7 +39,7 @@ export default async function EditUserPage({
     <div className="flex flex-col gap-10">
       <div>
         <h1 className="text-[26px]">{user.name}</h1>
-        <p className="mt-1 text-sm text-muted">Manage consumer record and ownership documents.</p>
+        <p className="mt-1 text-sm text-muted">Manage consumer record and unit ownership.</p>
       </div>
 
       <section>
@@ -65,7 +65,7 @@ export default async function EditUserPage({
       </section>
 
       <section>
-        <h2 className="text-lg font-medium text-ink">Ownership documents</h2>
+        <h2 className="text-lg font-medium text-ink">Unit ownership</h2>
 
         <div className="mt-3 flex flex-col gap-4">
           {user.ownershipDocuments.map((doc) => (
