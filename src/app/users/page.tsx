@@ -60,7 +60,7 @@ export default async function UsersPage({
   return (
     <PublicShell>
       <div className="h-1.5 bg-accent" />
-      <div className="mx-auto max-w-[1100px] px-6 py-12 md:px-16">
+      <div className="mx-auto max-w-[1320px] px-6 py-12 md:px-16">
         <div className="mb-1.5 flex flex-wrap items-center gap-3">
           <h1 className="text-[32px]">Consumer Database</h1>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface-soft px-2.5 py-1 font-mono text-[11px] text-muted">

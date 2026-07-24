@@ -41,7 +41,7 @@ export default async function HomePage() {
     <PublicShell>
       <div className="h-1.5 bg-accent" />
       <div className="bg-ink px-6 py-14 md:px-16">
-        <div className="mx-auto max-w-[1120px]">
+        <div className="mx-auto max-w-[1320px]">
           <h1 className="mb-3.5 text-[40px] leading-[1.1] tracking-[-0.5px] text-white md:text-[52px]">
             LRT City Consumer Community
           </h1>
@@ -52,7 +52,7 @@ export default async function HomePage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1120px] px-6 py-14 md:px-16">
+      <div className="mx-auto max-w-[1320px] px-6 py-14 md:px-16">
         <div className="mb-16 grid grid-cols-1 gap-8 md:grid-cols-2">
           <Card className="p-8">
             <SectionEyebrow className="mb-3">About</SectionEyebrow>
