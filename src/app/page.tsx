@@ -38,16 +38,12 @@ export default async function HomePage() {
       <div className="h-1.5 bg-accent" />
       <div className="bg-ink px-6 py-14 md:px-16">
         <div className="mx-auto max-w-[1120px]">
-          <SectionEyebrow className="mb-3.5 text-white/70">
-            PPJB Community · Terminus
-          </SectionEyebrow>
           <h1 className="mb-3.5 text-[40px] leading-[1.1] tracking-[-0.5px] text-white md:text-[52px]">
-            LRT City Tebet Customer
+            LRT City Consumer Community
           </h1>
           <p className="max-w-[640px] text-[17px] leading-relaxed text-white/85">
-            The customer record and community home for consumers and prospective
-            buyers of LRT City Tebet — how to join, where we&apos;ve been, and where
-            we&apos;re headed.
+            Perkumpulan konsumen LRT City yang menanti hak nya dipenuhi oleh PT
+            ADCP selaku pengembang LRT City
           </p>
         </div>
       </div>

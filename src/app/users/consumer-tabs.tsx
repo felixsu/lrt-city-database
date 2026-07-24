@@ -15,6 +15,7 @@ export type ConsumerGroup = {
   key: string;
   name: string;
   documents: DocumentWithRelations[];
+  totalUnits?: number | null;
 };
 
 type SortColumn = "name" | "unit";
@@ -83,6 +84,11 @@ export function ConsumerTabs({
     }
   }
 
+  const registeredUsers = useMemo(
+    () => new Set(activeGroup?.documents.map((doc) => doc.user.id)).size,
+    [activeGroup],
+  );
+
   return (
     <div>
       <div className="mb-6 flex flex-wrap gap-2 border-b border-hairline">
@@ -104,6 +110,14 @@ export function ConsumerTabs({
           </button>
         ))}
       </div>
+
+      {activeGroup && (
+        <div className="mb-6 font-mono text-xs text-muted">
+          Total units: {activeGroup.totalUnits ?? "—"} · Registered with us:{" "}
+          {activeGroup.documents.length} unit{activeGroup.documents.length === 1 ? "" : "s"} (from{" "}
+          {registeredUsers} user{registeredUsers === 1 ? "" : "s"})
+        </div>
+      )}
 
       {!activeGroup || activeGroup.documents.length === 0 ? (
         <p className="text-sm text-muted">No units match.</p>

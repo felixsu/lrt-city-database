@@ -29,6 +29,13 @@ export default async function AdminBuildingsPage() {
             required
             className="w-48 rounded-lg border border-hairline bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
           />
+          <input
+            type="number"
+            name="totalUnits"
+            min="0"
+            placeholder="Total units"
+            className="w-32 rounded-lg border border-hairline bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+          />
           <Button type="submit" variant="primary">
             <Plus className="h-4 w-4" /> Add building
           </Button>
