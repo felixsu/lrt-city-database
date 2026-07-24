@@ -46,7 +46,7 @@ export function UploadSettingsForm({
           className="mt-1 w-full rounded-lg border border-hairline bg-canvas px-3 py-2 text-sm outline-none focus:border-accent"
         />
         <p className="mt-1 text-xs text-muted">
-          Applies to each ownership document&apos;s photo and SPPU image.
+          Applies to each unit&apos;s PPJB photo and SPPU image.
         </p>
       </div>
 

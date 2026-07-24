@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useActionState } from "react";
+import { TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UNIT_TYPES, UNIT_TYPE_LABELS } from "@/lib/user-enums";
 import type { UserFormState } from "../actions";
@@ -20,6 +21,14 @@ function toDateInputValue(date: Date | null | undefined) {
 const fieldInputClass =
   "mt-1 rounded-lg border border-hairline bg-canvas px-3 py-1.5 text-sm outline-none focus:border-accent";
 
+function MissingBadge() {
+  return (
+    <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-accent/10 px-1.5 py-0.5 align-middle font-mono text-[10px] text-accent-strong">
+      <TriangleAlert className="h-2.5 w-2.5" /> Missing
+    </span>
+  );
+}
+
 export function OwnershipDocumentCard({
   document,
   userId,
@@ -30,7 +39,7 @@ export function OwnershipDocumentCard({
 }: {
   document: {
     id: string;
-    accountNumber: string;
+    accountNumber: string | null;
     unitNumber: string | null;
     unitType: string | null;
     ppjbDate: Date | null;
@@ -90,12 +99,14 @@ export function OwnershipDocumentCard({
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium text-muted">PPJB number</label>
+            <label className="text-xs font-medium text-muted">
+              PPJB number
+              {!document.accountNumber && <MissingBadge />}
+            </label>
             <input
               type="text"
               name="accountNumber"
-              required
-              defaultValue={document.accountNumber}
+              defaultValue={document.accountNumber ?? ""}
               placeholder="e.g. 005/ACP-TPM/PPJB/II/2024"
               className={`${fieldInputClass} w-64 font-mono`}
             />
@@ -110,7 +121,10 @@ export function OwnershipDocumentCard({
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-muted">SPPU number</label>
+            <label className="text-xs font-medium text-muted">
+              SPPU number
+              {!document.sppuNumber && <MissingBadge />}
+            </label>
             <input
               type="text"
               name="sppuNumber"
@@ -152,7 +166,7 @@ export function OwnershipDocumentCard({
         <input type="hidden" name="id" value={document.id} />
         <input type="hidden" name="userId" value={userId} />
         <Button type="submit" variant="danger" size="sm">
-          Delete document
+          Delete unit
         </Button>
       </form>
 
@@ -161,7 +175,7 @@ export function OwnershipDocumentCard({
           {document.photos.map((photo) => (
             <div key={photo.id} className="flex flex-col items-center gap-1">
               <div className="relative h-20 w-20 overflow-hidden rounded-md bg-surface-soft">
-                <Image src={photo.url} alt="Document" fill className="object-cover" />
+                <Image src={photo.url} alt="Unit" fill className="object-cover" />
               </div>
               <form action={deletePhotoAction}>
                 <input type="hidden" name="id" value={photo.id} />
@@ -241,11 +255,10 @@ export function CreateOwnershipDocumentForm({
           </select>
         </div>
         <div>
-          <label className="text-sm font-medium text-ink">PPJB number</label>
+          <label className="text-sm font-medium text-ink">PPJB number (optional)</label>
           <input
             type="text"
             name="accountNumber"
-            required
             placeholder="e.g. 005/ACP-TPM/PPJB/II/2024"
             className="mt-1 w-64 rounded-lg border border-hairline bg-surface px-3 py-2 font-mono text-sm"
           />
@@ -288,7 +301,7 @@ export function CreateOwnershipDocumentForm({
           <input type="file" name="photo" accept="image/*" className="mt-1 block text-sm" />
         </div>
         <Button type="submit" variant="primary" disabled={pending}>
-          {pending ? "Adding..." : "Add document"}
+          {pending ? "Adding..." : "Add unit"}
         </Button>
       </div>
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}

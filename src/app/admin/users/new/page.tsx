@@ -21,7 +21,7 @@ export default async function NewUserPage() {
         submitLabel="Create consumer"
       />
       <p className="-mt-4 text-xs text-muted">
-        You&apos;ll be able to add ownership documents and photos after creating the consumer.
+        You&apos;ll be able to add unit ownership and photos after creating the consumer.
       </p>
     </div>
   );

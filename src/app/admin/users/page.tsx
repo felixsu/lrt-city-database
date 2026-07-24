@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, TriangleAlert } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { LinkButton } from "@/components/ui/button";
@@ -41,6 +41,7 @@ export default async function AdminUsersPage({
         building: true,
         loanBank: true,
         _count: { select: { ownershipDocuments: true } },
+        ownershipDocuments: { select: { accountNumber: true, sppuNumber: true } },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -53,7 +54,7 @@ export default async function AdminUsersPage({
         <div>
           <h1 className="text-[26px]">Consumers</h1>
           <p className="mt-1 text-sm text-muted">
-            Manage customer records, ownership documents, and photos.
+            Manage customer records, unit ownership, and photos.
           </p>
         </div>
         <LinkButton href="/admin/users/new" variant="primary">
@@ -98,7 +99,7 @@ export default async function AdminUsersPage({
               <th className="px-4 py-3">Contact</th>
               <th className="px-4 py-3">Loan bank</th>
               <th className="px-4 py-3">Payment status</th>
-              <th className="px-4 py-3">Ownership docs</th>
+              <th className="px-4 py-3">Units</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -125,7 +126,15 @@ export default async function AdminUsersPage({
                     )}
                   </td>
                   <td className="px-4 py-3.5 font-mono text-xs text-ink">
-                    {user._count.ownershipDocuments}
+                    <span className="inline-flex items-center gap-1">
+                      {user._count.ownershipDocuments}
+                      {user.ownershipDocuments.some((d) => !d.accountNumber || !d.sppuNumber) && (
+                        <TriangleAlert
+                          className="h-3 w-3 text-accent-strong"
+                          aria-label="Missing PPJB or SPPU number"
+                        />
+                      )}
+                    </span>
                   </td>
                   <td className="px-4 py-3.5 text-right">
                     <a
