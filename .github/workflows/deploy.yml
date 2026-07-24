@@ -51,8 +51,12 @@ jobs:
             git clean -fd
             git pull
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
-            echo "DIRECT_URL=${{ secrets.DIRECT_URL }}" >> .env
+            echo "POSTGRES_USER=lrtcity" > .env
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+            echo "POSTGRES_DB=lrtcity" >> .env
+            echo "DB_PORT=8531" >> .env
+            echo "DATABASE_URL=postgresql://lrtcity:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/lrtcity" >> .env
+            echo "DIRECT_URL=postgresql://lrtcity:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/lrtcity" >> .env
             echo "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" >> .env
             echo "AUTH_URL=https://lrtcity.lixionary.com" >> .env
             echo "AUTH_GOOGLE_ID=${{ secrets.AUTH_GOOGLE_ID }}" >> .env
