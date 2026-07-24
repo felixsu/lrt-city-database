@@ -8,7 +8,12 @@ import { updateBuilding, deleteBuilding } from "./actions";
 export function BuildingRow({
   building,
 }: {
-  building: { id: string; name: string; _count: { users: number } };
+  building: {
+    id: string;
+    name: string;
+    totalUnits: number | null;
+    _count: { users: number };
+  };
 }) {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -30,6 +35,14 @@ export function BuildingRow({
           autoFocus
           className="flex-1 rounded-lg border border-hairline bg-surface px-3 py-1.5 text-sm outline-none focus:border-accent"
         />
+        <input
+          type="number"
+          name="totalUnits"
+          min="0"
+          defaultValue={building.totalUnits ?? ""}
+          placeholder="Total units"
+          className="w-32 rounded-lg border border-hairline bg-surface px-3 py-1.5 text-sm outline-none focus:border-accent"
+        />
         <Button type="submit" variant="primary" size="sm">
           Save
         </Button>
@@ -44,7 +57,9 @@ export function BuildingRow({
     <div className="flex items-center justify-between p-4">
       <div>
         <p className="text-sm font-medium text-ink">{building.name}</p>
-        <p className="font-mono text-xs text-muted">{building._count.users} consumers</p>
+        <p className="font-mono text-xs text-muted">
+          {building._count.users} consumers · {building.totalUnits ?? "—"} total units
+        </p>
       </div>
       <div className="flex items-center gap-4">
         <button

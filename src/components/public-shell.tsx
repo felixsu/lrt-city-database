@@ -6,7 +6,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       <NavBar />
       <main className="flex-1">{children}</main>
       <footer className="border-t border-hairline px-6 py-6 text-center font-mono text-xs text-muted">
-        LRT City Tebet Customer
+        LRT City Consumer Community
       </footer>
     </div>
   );

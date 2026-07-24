@@ -21,8 +21,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LRT City Tebet Customer",
-  description: "Customer database CMS for LRT City Tebet Customer",
+  title: "LRT City Consumer Community",
+  description: "Customer database CMS for LRT City Consumer Community",
 };
 
 export default function RootLayout({

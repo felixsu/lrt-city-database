@@ -34,10 +34,11 @@ model AdminUser {
 }
 
 model Building {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  users     User[]
+  id         String   @id @default(cuid())
+  name       String   @unique
+  totalUnits Int?
+  createdAt  DateTime @default(now())
+  users      User[]
 }
 
 model LoanBank {

@@ -10,26 +10,29 @@ export default async function UsersPage({
 }) {
   const { building: buildingFilter, q } = await searchParams;
 
-  const documents = await prisma.ownershipDocument.findMany({
-    where: q
-      ? {
-          OR: [
-            { user: { name: { contains: q, mode: "insensitive" } } },
-            { unitNumber: { contains: q, mode: "insensitive" } },
-            { accountNumber: { contains: q, mode: "insensitive" } },
-          ],
-        }
-      : undefined,
-    include: {
-      user: { include: { building: true } },
-      photos: true,
-    },
-    orderBy: [
-      { user: { building: { name: "asc" } } },
-      { user: { name: "asc" } },
-      { createdAt: "asc" },
-    ],
-  });
+  const [documents, buildings] = await Promise.all([
+    prisma.ownershipDocument.findMany({
+      where: q
+        ? {
+            OR: [
+              { user: { name: { contains: q, mode: "insensitive" } } },
+              { unitNumber: { contains: q, mode: "insensitive" } },
+              { accountNumber: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : undefined,
+      include: {
+        user: { include: { building: true } },
+        photos: true,
+      },
+      orderBy: [
+        { user: { building: { name: "asc" } } },
+        { user: { name: "asc" } },
+        { createdAt: "asc" },
+      ],
+    }),
+    prisma.building.findMany({ select: { id: true, totalUnits: true } }),
+  ]);
 
   const groups: ConsumerGroup[] = [];
   for (const doc of documents) {
@@ -37,7 +40,8 @@ export default async function UsersPage({
     const name = doc.user.building?.name ?? "Unassigned";
     let group = groups.find((g) => g.key === key);
     if (!group) {
-      group = { key, name, documents: [] };
+      const totalUnits = buildings.find((b) => b.id === doc.user.buildingId)?.totalUnits;
+      group = { key, name, documents: [], totalUnits };
       groups.push(group);
     }
     group.documents.push(doc);
