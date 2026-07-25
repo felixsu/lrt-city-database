@@ -94,6 +94,15 @@ export default async function AdminMediaPage() {
                           className="min-w-0 flex-1 rounded-lg border border-hairline bg-canvas px-3 py-1.5 text-sm outline-none focus:border-accent"
                         />
                         <input
+                          type="date"
+                          name="publishedAt"
+                          defaultValue={
+                            link.publishedAt ? link.publishedAt.toISOString().slice(0, 10) : ""
+                          }
+                          title="Posted date"
+                          className="rounded-lg border border-hairline bg-canvas px-3 py-1.5 text-sm outline-none focus:border-accent"
+                        />
+                        <input
                           type="number"
                           name="order"
                           defaultValue={link.order}

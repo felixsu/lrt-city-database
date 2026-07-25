@@ -2,9 +2,15 @@ export type LinkPreview = {
   title: string | null;
   description: string | null;
   imageUrl: string | null;
+  publishedAt: Date | null;
 };
 
-const EMPTY_PREVIEW: LinkPreview = { title: null, description: null, imageUrl: null };
+const EMPTY_PREVIEW: LinkPreview = {
+  title: null,
+  description: null,
+  imageUrl: null,
+  publishedAt: null,
+};
 const MAX_BYTES = 500_000;
 const FETCH_TIMEOUT_MS = 8000;
 
@@ -42,6 +48,7 @@ export async function fetchLinkPreview(url: string): Promise<LinkPreview> {
       title,
       description,
       imageUrl: rawImage ? resolveUrl(rawImage, url) : null,
+      publishedAt: extractPublishedAt(html),
     };
   } catch {
     return EMPTY_PREVIEW;
@@ -93,6 +100,7 @@ async function fetchYouTubePreview(videoId: string): Promise<LinkPreview | null>
       title: typeof data.title === "string" ? data.title : null,
       description: null,
       imageUrl: typeof data.thumbnail_url === "string" ? data.thumbnail_url : null,
+      publishedAt: null,
     };
   } catch {
     return null;
@@ -132,6 +140,17 @@ function extractMeta(html: string, property: string): string | null {
 function extractTag(html: string, tag: string): string | null {
   const match = html.match(new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, "i"));
   return match ? decodeHtmlEntities(match[1].trim()) : null;
+}
+
+function extractPublishedAt(html: string): Date | null {
+  const raw =
+    extractMeta(html, "article:published_time") ??
+    html.match(/"datePublished"\s*:\s*"([^"]+)"/)?.[1] ??
+    null;
+  if (!raw) return null;
+
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function resolveUrl(maybeRelative: string, base: string): string {

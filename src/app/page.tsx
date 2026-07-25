@@ -150,9 +150,16 @@ export default async function HomePage() {
                       )}
                     </div>
                     <div className="flex flex-1 flex-col gap-2.5 p-[18px]">
-                      <span className="inline-flex w-fit rounded-full bg-accent/10 px-2.5 py-1 font-mono text-[11px] text-accent-text">
-                        {hostname(link.url)}
-                      </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="inline-flex w-fit rounded-full bg-accent/10 px-2.5 py-1 font-mono text-[11px] text-accent-text">
+                          {hostname(link.url)}
+                        </span>
+                        {formatEventDate(link.publishedAt ?? link.createdAt) && (
+                          <span className="font-mono text-[11px] text-muted">
+                            {formatEventDate(link.publishedAt ?? link.createdAt)}
+                          </span>
+                        )}
+                      </div>
                       <h3 className="text-[15px] leading-snug font-medium text-ink">
                         {link.title || link.url}
                       </h3>
