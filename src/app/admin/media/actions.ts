@@ -23,6 +23,7 @@ export async function addMediaLink(formData: FormData) {
       title: preview.title,
       description: preview.description,
       imageUrl: preview.imageUrl,
+      publishedAt: preview.publishedAt,
     },
   });
 
@@ -40,10 +41,18 @@ export async function updateMediaLink(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim() || null;
   const imageUrl = String(formData.get("imageUrl") ?? "").trim() || null;
   const order = Number(formData.get("order") ?? 0);
+  const publishedAtRaw = String(formData.get("publishedAt") ?? "").trim();
+  const publishedAt = publishedAtRaw ? new Date(publishedAtRaw) : null;
 
   await prisma.mediaLink.update({
     where: { id },
-    data: { title, description, imageUrl, order: Number.isFinite(order) ? order : 0 },
+    data: {
+      title,
+      description,
+      imageUrl,
+      publishedAt,
+      order: Number.isFinite(order) ? order : 0,
+    },
   });
 
   revalidatePath("/");
@@ -67,6 +76,7 @@ export async function refreshMediaLinkPreview(formData: FormData) {
       title: preview.title ?? link.title,
       description: preview.description ?? link.description,
       imageUrl: preview.imageUrl ?? link.imageUrl,
+      publishedAt: preview.publishedAt ?? link.publishedAt,
     },
   });
 
