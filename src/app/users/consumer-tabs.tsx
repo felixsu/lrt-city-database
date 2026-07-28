@@ -123,7 +123,7 @@ export function ConsumerTabs({
         <p className="text-sm text-muted">No units match.</p>
       ) : (
         <div>
-          <div className="hidden border-b border-hairline pb-2.5 sm:grid sm:grid-cols-[0.9fr_0.7fr_1fr_1.3fr_1.3fr_1.2fr] sm:gap-4">
+          <div className="hidden border-b border-hairline pb-2.5 sm:grid sm:grid-cols-[0.9fr_0.6fr_0.9fr_0.9fr_1.1fr_0.9fr_1.1fr] sm:gap-4">
             <SortableHeader
               label="Name"
               column="name"
@@ -145,7 +145,10 @@ export function ConsumerTabs({
               Unit type
             </div>
             <div className="font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
-              PPJB / SPPU
+              PPJB No
+            </div>
+            <div className="font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
+              SPPU No
             </div>
             <div className="font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
               Remarks
@@ -155,7 +158,7 @@ export function ConsumerTabs({
           {sortedDocuments.map((doc) => (
             <div
               key={doc.id}
-              className="grid grid-cols-1 gap-4 border-b border-hairline-soft py-4 sm:grid-cols-[0.9fr_0.7fr_1fr_1.3fr_1.3fr_1.2fr]"
+              className="grid grid-cols-1 gap-4 border-b border-hairline-soft py-4 sm:grid-cols-[0.9fr_0.6fr_0.9fr_0.9fr_1.1fr_0.9fr_1.1fr]"
             >
               <div>
                 <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase sm:hidden">
@@ -187,7 +190,7 @@ export function ConsumerTabs({
               </div>
               <div>
                 <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase sm:hidden">
-                  PPJB / SPPU
+                  PPJB No
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {doc.accountNumber ? (
@@ -199,11 +202,6 @@ export function ConsumerTabs({
                       <TriangleAlert className="h-2.5 w-2.5" /> No PPJB
                     </span>
                   )}
-                  {!doc.sppuNumber && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] text-accent-strong">
-                      <TriangleAlert className="h-2.5 w-2.5" /> No SPPU
-                    </span>
-                  )}
                   {doc.photos.slice(0, 2).map((photo) => (
                     <div
                       key={photo.id}
@@ -212,6 +210,22 @@ export function ConsumerTabs({
                       <Image src={photo.url} alt="" fill className="object-cover" />
                     </div>
                   ))}
+                </div>
+              </div>
+              <div>
+                <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase sm:hidden">
+                  SPPU No
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {doc.sppuNumber ? (
+                    <span className="rounded-md border border-hairline bg-surface-soft px-2 py-0.5 font-mono text-xs text-ink">
+                      {doc.sppuNumber}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] text-accent-strong">
+                      <TriangleAlert className="h-2.5 w-2.5" /> No SPPU
+                    </span>
+                  )}
                 </div>
               </div>
               <div>

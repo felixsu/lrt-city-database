@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
-import { isUniqueConstraintError, uniqueConstraintField } from "@/lib/ownership-validation";
+import { uniqueConstraintField } from "@/lib/ownership-validation";
 
 export type LeadConvertState = { error: string | null };
 
@@ -20,6 +20,13 @@ export async function convertLead(
   const lead = await prisma.lead.findUnique({ where: { id } });
   if (!lead) return { error: "Lead not found." };
   if (lead.status === "CONVERTED") return { error: "Lead is already converted." };
+
+  const existingUnit = await prisma.ownershipDocument.findFirst({
+    where: { unitNumber: lead.unitNumber, user: { buildingId: lead.buildingId } },
+  });
+  if (existingUnit) {
+    return { error: `Unit ${lead.unitNumber} is already on record in this building.` };
+  }
 
   let userId: string;
   try {
@@ -52,9 +59,6 @@ export async function convertLead(
   } catch (err) {
     if (uniqueConstraintField(err) === "accountNumber") {
       return { error: `PPJB number ${lead.ppjbNumber} is already on record for another unit.` };
-    }
-    if (isUniqueConstraintError(err)) {
-      return { error: `Unit ${lead.unitNumber} is already on record.` };
     }
     throw err;
   }
