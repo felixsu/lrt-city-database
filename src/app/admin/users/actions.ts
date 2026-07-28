@@ -8,11 +8,7 @@ import { requireAdmin } from "@/lib/require-admin";
 import { uploadCompressedImage, deleteImage, findOversizedFile } from "@/lib/cloudinary";
 import { getUploadSettings } from "@/lib/upload-settings";
 import { UNIT_TYPES, type UnitType } from "@/lib/user-enums";
-import {
-  unitNumberSchema,
-  isUniqueConstraintError,
-  uniqueConstraintField,
-} from "@/lib/ownership-validation";
+import { unitNumberSchema, uniqueConstraintField } from "@/lib/ownership-validation";
 
 export type UserFormState = { error: string | null };
 
@@ -97,6 +93,30 @@ export async function updateUser(
 
   if (!id || !name || !contactNumber) return { error: "Name and contact number are required." };
 
+  const current = await prisma.user.findUnique({
+    where: { id },
+    select: { buildingId: true, ownershipDocuments: { select: { unitNumber: true } } },
+  });
+  if (!current) return { error: "Consumer not found." };
+
+  if (current.buildingId !== buildingId) {
+    const unitNumbers = current.ownershipDocuments
+      .map((doc) => doc.unitNumber)
+      .filter((unitNumber): unitNumber is string => unitNumber !== null);
+    if (unitNumbers.length > 0) {
+      const conflict = await prisma.ownershipDocument.findFirst({
+        where: {
+          unitNumber: { in: unitNumbers },
+          userId: { not: id },
+          user: { buildingId },
+        },
+      });
+      if (conflict) {
+        return { error: `Cannot change building: unit ${conflict.unitNumber} already exists there.` };
+      }
+    }
+  }
+
   await prisma.user.update({
     where: { id },
     data: {
@@ -160,9 +180,17 @@ export async function createOwnershipDocument(
   const unitNumber = unitNumberResult.data;
   const unitType = parseUnitType(formData.get("unitType"));
 
-  const existingUnit = await prisma.ownershipDocument.findFirst({ where: { unitNumber } });
+  const owner = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { buildingId: true },
+  });
+  if (!owner) return { error: "Consumer not found." };
+
+  const existingUnit = await prisma.ownershipDocument.findFirst({
+    where: { unitNumber, user: { buildingId: owner.buildingId } },
+  });
   if (existingUnit) {
-    return { error: `Unit ${unitNumber} is already on record.` };
+    return { error: `Unit ${unitNumber} is already on record in this building.` };
   }
 
   if (accountNumber) {
@@ -233,9 +261,6 @@ export async function createOwnershipDocument(
     if (uniqueConstraintField(err) === "accountNumber") {
       return { error: `PPJB number ${accountNumber} is already on record for another unit.` };
     }
-    if (isUniqueConstraintError(err)) {
-      return { error: `Unit ${unitNumber} is already on record.` };
-    }
     throw err;
   }
 
@@ -262,11 +287,17 @@ export async function updateOwnershipDocument(
   const unitNumber = unitNumberResult.data;
   const unitType = parseUnitType(formData.get("unitType"));
 
+  const existing = await prisma.ownershipDocument.findUnique({
+    where: { id },
+    include: { user: { select: { buildingId: true } } },
+  });
+  if (!existing) return { error: "Unit not found." };
+
   const existingUnit = await prisma.ownershipDocument.findFirst({
-    where: { unitNumber, NOT: { id } },
+    where: { unitNumber, NOT: { id }, user: { buildingId: existing.user.buildingId } },
   });
   if (existingUnit) {
-    return { error: `Unit ${unitNumber} is already on record.` };
+    return { error: `Unit ${unitNumber} is already on record in this building.` };
   }
 
   if (accountNumber) {
@@ -288,9 +319,6 @@ export async function updateOwnershipDocument(
     const oversizedError = findOversizedFile([sppuImageFile], settings.ppjbMaxUploadMb * 1024 * 1024);
     if (oversizedError) return { error: oversizedError };
   }
-
-  const existing = await prisma.ownershipDocument.findUnique({ where: { id } });
-  if (!existing) return { error: "Unit not found." };
 
   let sppuImage: Awaited<ReturnType<typeof uploadPhotoIfPresent>> = null;
   let warning: string | null = null;
@@ -323,9 +351,6 @@ export async function updateOwnershipDocument(
   } catch (err) {
     if (uniqueConstraintField(err) === "accountNumber") {
       return { error: `PPJB number ${accountNumber} is already on record for another unit.` };
-    }
-    if (isUniqueConstraintError(err)) {
-      return { error: `Unit ${unitNumber} is already on record.` };
     }
     throw err;
   }
