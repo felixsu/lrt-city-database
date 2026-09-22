@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter, JetBrains_Mono } from "next/font/google";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -22,12 +20,12 @@ const jetbrainsMono = JetBrains_Mono({
 
 const SITE_URL = "https://lrtcity.lixionary.com";
 const SITE_DESCRIPTION =
-  "Komunitas konsumen LRT City Tebet — informasi resmi seputar unit, PPJB, dan progres projek LRT City yang dikembangkan oleh PT ADCP (Adhi Commuter Properti), bagian dari Adhi Karya Group.";
+  "Perkumpulan konsumen LRT City Tebet — database konsumen, timeline projek, dokumen PPJB, dan berita terbaru seputar LRT City.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "LRT City Consumer Community | ADCP LRT City Tebet",
+    default: "LRT City Consumer Community",
     template: "%s | LRT City Consumer Community",
   },
   description: SITE_DESCRIPTION,
@@ -45,12 +43,12 @@ export const metadata: Metadata = {
     locale: "id_ID",
     url: SITE_URL,
     siteName: "LRT City Consumer Community",
-    title: "LRT City Consumer Community | ADCP LRT City Tebet",
+    title: "LRT City Consumer Community",
     description: SITE_DESCRIPTION,
   },
   twitter: {
     card: "summary_large_image",
-    title: "LRT City Consumer Community | ADCP LRT City Tebet",
+    title: "LRT City Consumer Community",
     description: SITE_DESCRIPTION,
   },
   verification: {
@@ -70,8 +68,6 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-canvas font-sans text-body">
         {children}
-        <SpeedInsights />
-        <Analytics />
       </body>
     </html>
   );

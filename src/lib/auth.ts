@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 const BOOTSTRAP_ADMIN_EMAIL = "felix.soewito@gmail.com";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: process.env.AUTH_SECRET || "dev-auth-secret-key-32-chars-long-min",
   providers: [Google],
   session: { strategy: "jwt" },
   pages: {

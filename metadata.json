@@ -1,0 +1,6 @@
+{
+  "name": "LRT City Consumer Community",
+  "description": "Perkumpulan konsumen LRT City Tebet — database konsumen, timeline projek, dokumen PPJB, dan berita terbaru seputar LRT City.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
