@@ -48,6 +48,7 @@ export async function createUser(
   await requireAdmin();
 
   const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim() || null;
   const contactNumber = String(formData.get("contactNumber") ?? "").trim();
   const buildingId = String(formData.get("buildingId") ?? "") || null;
   const loanBankId = String(formData.get("loanBankId") ?? "") || null;
@@ -61,6 +62,7 @@ export async function createUser(
   const user = await prisma.user.create({
     data: {
       name,
+      email,
       contactNumber,
       buildingId,
       loanBankId,
@@ -83,6 +85,7 @@ export async function updateUser(
 
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim() || null;
   const contactNumber = String(formData.get("contactNumber") ?? "").trim();
   const buildingId = String(formData.get("buildingId") ?? "") || null;
   const loanBankId = String(formData.get("loanBankId") ?? "") || null;
@@ -121,6 +124,7 @@ export async function updateUser(
     where: { id },
     data: {
       name,
+      email,
       contactNumber,
       buildingId,
       loanBankId,

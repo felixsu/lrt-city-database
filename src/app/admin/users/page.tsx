@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowDown, ArrowUp, ArrowUpDown, Plus, TriangleAlert } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Plus, TriangleAlert, Upload } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { LinkButton } from "@/components/ui/button";
@@ -139,9 +139,14 @@ export default async function AdminUsersPage({
             Manage customer records, unit ownership, and photos.
           </p>
         </div>
-        <LinkButton href="/admin/users/new" variant="primary">
-          <Plus className="h-4 w-4" /> Add consumer
-        </LinkButton>
+        <div className="flex items-center gap-2.5">
+          <LinkButton href="/admin/import" variant="secondary">
+            <Upload className="h-4 w-4" /> Import CSV
+          </LinkButton>
+          <LinkButton href="/admin/users/new" variant="primary">
+            <Plus className="h-4 w-4" /> Add consumer
+          </LinkButton>
+        </div>
       </div>
 
       <form className="flex flex-wrap gap-2.5" method="GET">
@@ -220,7 +225,12 @@ export default async function AdminUsersPage({
             ) : (
               rows.map((user) => (
                 <tr key={user.id}>
-                  <td className="px-4 py-3.5 font-medium text-ink">{user.name}</td>
+                  <td className="px-4 py-3.5 font-medium text-ink">
+                    <div>{user.name}</div>
+                    {user.email && (
+                      <div className="font-mono text-xs text-muted font-normal">{user.email}</div>
+                    )}
+                  </td>
                   <td className="px-4 py-3.5 text-ink">{user.building?.name ?? "—"}</td>
                   <td className="px-4 py-3.5 font-mono text-xs text-ink">{user.contactNumber}</td>
                   <td className="px-4 py-3.5 text-ink">{user.loanBank?.name ?? "—"}</td>

@@ -22,6 +22,7 @@ export function UserFormFields({
   loanBanks: LoanBank[];
   defaultValues?: {
     name: string;
+    email?: string | null;
     contactNumber: string;
     buildingId: string | null;
     loanBankId: string | null;
@@ -41,6 +42,17 @@ export function UserFormFields({
           name="name"
           required
           defaultValue={defaultValues?.name}
+          className={inputClass}
+        />
+      </div>
+
+      <div>
+        <label className="text-sm font-medium text-ink">Email address</label>
+        <input
+          type="email"
+          name="email"
+          defaultValue={defaultValues?.email ?? ""}
+          placeholder="e.g. consumer@example.com"
           className={inputClass}
         />
       </div>

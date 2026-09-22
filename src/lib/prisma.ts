@@ -144,8 +144,8 @@ if (process.env.DATABASE_URL) {
   console.warn("[AI Studio] DATABASE_URL not set — using in-memory mock for Prisma");
 }
 
-export const prisma: any = new Proxy(
-  {},
+export const prisma: PrismaClient = new Proxy(
+  {} as unknown as PrismaClient,
   {
     get: (_, prop: string) => {
       if (!realPrisma) {

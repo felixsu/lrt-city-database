@@ -46,6 +46,22 @@ export function OwnershipDocumentCard({
     sppuNumber: string | null;
     sppuDate: Date | null;
     sppuImageUrl: string | null;
+    purchasePrice?: string | null;
+    paymentType?: string | null;
+    loanBankName?: string | null;
+    loanTenorMonths?: number | null;
+    loanMonthsPaid?: number | null;
+    loanPaymentStatus?: string | null;
+    demandType?: string | null;
+    materialLossPaid?: string | null;
+    materialDetails?: string | null;
+    remainingArrears?: string | null;
+    otherLosses?: string | null;
+    lossBasisCalc?: string | null;
+    pinjamPakai?: string | null;
+    maxWaitDuration?: string | null;
+    compensation?: string | null;
+    surveyTimestamp?: Date | null;
     photos: Photo[];
   };
   userId: string;
@@ -142,6 +158,75 @@ export function OwnershipDocumentCard({
             />
           </div>
         </div>
+
+        {/* Survey & Integrated Financial Details */}
+        {(document.purchasePrice ||
+          document.paymentType ||
+          document.demandType ||
+          document.materialLossPaid ||
+          document.remainingArrears ||
+          document.materialDetails) && (
+          <div className="rounded-lg border border-hairline bg-surface-soft/40 p-3 text-xs space-y-2.5">
+            <span className="font-semibold text-ink block border-b border-hairline pb-1">
+              Survey & Financial Details (Imported from Consumer Survey)
+            </span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div>
+                <span className="text-muted block text-[11px]">Purchase Price</span>
+                <span className="font-medium text-ink">{document.purchasePrice || "—"}</span>
+              </div>
+              <div>
+                <span className="text-muted block text-[11px]">Payment Method</span>
+                <span className="text-ink">{document.paymentType || "—"}</span>
+              </div>
+              <div>
+                <span className="text-muted block text-[11px]">Loan Bank</span>
+                <span className="text-ink">{document.loanBankName || "—"}</span>
+              </div>
+              <div>
+                <span className="text-muted block text-[11px]">Tenor / Months Paid</span>
+                <span className="text-ink">
+                  {document.loanTenorMonths ? `${document.loanTenorMonths} bln` : "—"} /{" "}
+                  {document.loanMonthsPaid ? `${document.loanMonthsPaid} paid` : "—"}
+                </span>
+              </div>
+              <div>
+                <span className="text-muted block text-[11px]">KPA Status</span>
+                <span className="text-ink">{document.loanPaymentStatus || "—"}</span>
+              </div>
+              <div>
+                <span className="text-muted block text-[11px]">Demand Type</span>
+                <span className="font-semibold text-accent">{document.demandType || "—"}</span>
+              </div>
+              <div>
+                <span className="text-muted block text-[11px]">Material Loss Paid</span>
+                <span className="font-medium text-red-600">{document.materialLossPaid || "—"}</span>
+              </div>
+              <div>
+                <span className="text-muted block text-[11px]">Remaining Arrears</span>
+                <span className="text-ink">{document.remainingArrears || "—"}</span>
+              </div>
+            </div>
+
+            {document.materialDetails && (
+              <div className="border-t border-hairline pt-2">
+                <span className="text-muted block text-[11px]">Material Loss Details:</span>
+                <p className="mt-0.5 whitespace-pre-wrap font-mono text-[11px] text-ink bg-surface p-2 rounded border border-hairline">
+                  {document.materialDetails}
+                </p>
+              </div>
+            )}
+
+            {document.lossBasisCalc && (
+              <div className="border-t border-hairline pt-2">
+                <span className="text-muted block text-[11px]">Immaterial Loss Calculation:</span>
+                <p className="mt-0.5 whitespace-pre-wrap font-mono text-[11px] text-ink bg-surface p-2 rounded border border-hairline">
+                  {document.lossBasisCalc}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="flex flex-wrap items-center gap-3">
           {document.sppuImageUrl && (

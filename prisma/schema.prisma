@@ -52,6 +52,7 @@ model LoanBank {
 model User {
   id                 String        @id @default(cuid())
   name               String
+  email              String?
   contactNumber      String
   remarks            String?
   loanBankId         String?
@@ -76,6 +77,22 @@ model OwnershipDocument {
   sppuDate          DateTime?
   sppuImageUrl      String?
   sppuImagePublicId String?
+  purchasePrice     String?
+  paymentType       String?
+  loanBankName      String?
+  loanTenorMonths   Int?
+  loanMonthsPaid    Int?
+  loanPaymentStatus String?
+  demandType        String?
+  materialLossPaid  String?
+  materialDetails   String?
+  remainingArrears  String?
+  otherLosses       String?
+  lossBasisCalc     String?
+  pinjamPakai       String?
+  maxWaitDuration   String?
+  compensation      String?
+  surveyTimestamp   DateTime?
   userId            String
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   photos            OwnershipDocumentPhoto[]

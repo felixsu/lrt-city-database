@@ -14,6 +14,7 @@ import {
   BookOpen,
   Shield,
   Settings,
+  Upload,
 } from "lucide-react";
 
 export const ADMIN_SECTIONS = [
@@ -21,6 +22,7 @@ export const ADMIN_SECTIONS = [
   { segment: "home", href: "/admin/home", label: "Home content", icon: FileText },
   { segment: "leads", href: "/admin/leads", label: "Leads", icon: UserPlus },
   { segment: "users", href: "/admin/users", label: "Consumers", icon: Users },
+  { segment: "import", href: "/admin/import", label: "Import CSV", icon: Upload },
   { segment: "buildings", href: "/admin/buildings", label: "Buildings", icon: Building2 },
   { segment: "loan-banks", href: "/admin/loan-banks", label: "Loan banks", icon: Landmark },
   { segment: "timeline", href: "/admin/timeline", label: "Timeline", icon: Milestone },
