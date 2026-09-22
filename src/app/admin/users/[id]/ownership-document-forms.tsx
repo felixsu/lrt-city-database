@@ -53,7 +53,7 @@ export function OwnershipDocumentCard({
     sppuNumber: string | null;
     sppuDate: Date | null;
     sppuImageUrl: string | null;
-    purchasePrice?: string | null;
+    contractValue?: string | null;
     paymentType?: string | null;
     loanBankName?: string | null;
     loanTenorMonths?: number | null;
@@ -161,7 +161,7 @@ export function OwnershipDocumentCard({
         </div>
 
         {/* Survey & Integrated Financial Details */}
-        {(document.purchasePrice ||
+        {(document.contractValue ||
           document.paymentType ||
           document.tuntutan ||
           document.materialLossPaid ||
@@ -173,8 +173,8 @@ export function OwnershipDocumentCard({
             </span>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <div>
-                <span className="text-muted block text-[11px]">Purchase Price</span>
-                <span className="font-medium text-ink">{document.purchasePrice || "—"}</span>
+                <span className="text-muted block text-[11px]">Nilai Kontrak Unit</span>
+                <span className="font-medium text-ink">{document.contractValue || "—"}</span>
               </div>
               <div>
                 <span className="text-muted block text-[11px]">Tuntutan</span>

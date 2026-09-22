@@ -75,7 +75,7 @@ model OwnershipDocument {
   sppuDate          DateTime?
   sppuImageUrl      String?
   sppuImagePublicId String?
-  purchasePrice     String?
+  contractValue     String?
   paymentType       String?
   loanBankName      String?
   loanTenorMonths   Int?
