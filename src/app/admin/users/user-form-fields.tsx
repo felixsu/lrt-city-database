@@ -28,7 +28,6 @@ export function UserFormFields({
     loanBankId: string | null;
     paymentStatus: "IN_PROGRESS" | "PAID_OFF";
     paidOffDate: Date | null;
-    remarks: string | null;
   };
 }) {
   const [paymentStatus, setPaymentStatus] = useState(defaultValues?.paymentStatus ?? "IN_PROGRESS");
@@ -129,20 +128,6 @@ export function UserFormFields({
         )}
       </div>
 
-      <div>
-        <label className="text-sm font-medium text-ink">
-          Remarks{" "}
-          <span className="font-normal text-muted">
-            (e.g. reason PPJB could not be provided)
-          </span>
-        </label>
-        <textarea
-          name="remarks"
-          rows={3}
-          defaultValue={defaultValues?.remarks ?? ""}
-          className={inputClass}
-        />
-      </div>
     </>
   );
 }

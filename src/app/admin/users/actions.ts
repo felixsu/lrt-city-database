@@ -7,7 +7,6 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { uploadCompressedImage, deleteImage, findOversizedFile } from "@/lib/cloudinary";
 import { getUploadSettings } from "@/lib/upload-settings";
-import { UNIT_TYPES, type UnitType } from "@/lib/user-enums";
 import { unitNumberSchema, uniqueConstraintField } from "@/lib/ownership-validation";
 
 export type UserFormState = { error: string | null };
@@ -15,11 +14,6 @@ export type UserFormState = { error: string | null };
 function parseDate(value: FormDataEntryValue | null): Date | null {
   const str = String(value ?? "");
   return str ? new Date(str) : null;
-}
-
-function parseUnitType(value: FormDataEntryValue | null): UnitType | null {
-  const str = String(value ?? "");
-  return (UNIT_TYPES as readonly string[]).includes(str) ? (str as UnitType) : null;
 }
 
 function parsePaymentStatus(value: FormDataEntryValue | null): PaymentStatus {
@@ -52,7 +46,6 @@ export async function createUser(
   const contactNumber = String(formData.get("contactNumber") ?? "").trim();
   const buildingId = String(formData.get("buildingId") ?? "") || null;
   const loanBankId = String(formData.get("loanBankId") ?? "") || null;
-  const remarks = String(formData.get("remarks") ?? "").trim() || null;
   const paymentStatus = parsePaymentStatus(formData.get("paymentStatus"));
   const paidOffDate =
     paymentStatus === PaymentStatus.PAID_OFF ? parseDate(formData.get("paidOffDate")) : null;
@@ -68,7 +61,6 @@ export async function createUser(
       loanBankId,
       paymentStatus,
       paidOffDate,
-      remarks,
     },
   });
 
@@ -89,7 +81,6 @@ export async function updateUser(
   const contactNumber = String(formData.get("contactNumber") ?? "").trim();
   const buildingId = String(formData.get("buildingId") ?? "") || null;
   const loanBankId = String(formData.get("loanBankId") ?? "") || null;
-  const remarks = String(formData.get("remarks") ?? "").trim() || null;
   const paymentStatus = parsePaymentStatus(formData.get("paymentStatus"));
   const paidOffDate =
     paymentStatus === PaymentStatus.PAID_OFF ? parseDate(formData.get("paidOffDate")) : null;
@@ -130,7 +121,6 @@ export async function updateUser(
       loanBankId,
       paymentStatus,
       paidOffDate,
-      remarks,
     },
   });
 
@@ -175,6 +165,7 @@ export async function createOwnershipDocument(
 
   const userId = String(formData.get("userId") ?? "");
   const accountNumber = String(formData.get("accountNumber") ?? "").trim() || null;
+  const tuntutan = String(formData.get("tuntutan") ?? "").trim() || null;
   if (!userId) return { error: "Missing consumer reference." };
 
   const unitNumberResult = unitNumberSchema.safeParse(formData.get("unitNumber"));
@@ -182,7 +173,6 @@ export async function createOwnershipDocument(
     return { error: unitNumberResult.error.issues[0].message };
   }
   const unitNumber = unitNumberResult.data;
-  const unitType = parseUnitType(formData.get("unitType"));
 
   const owner = await prisma.user.findUnique({
     where: { id: userId },
@@ -242,7 +232,7 @@ export async function createOwnershipDocument(
         userId,
         accountNumber,
         unitNumber,
-        unitType,
+        tuntutan,
         ppjbDate,
         sppuNumber,
         sppuDate,
@@ -282,6 +272,7 @@ export async function updateOwnershipDocument(
   const id = String(formData.get("id") ?? "");
   const userId = String(formData.get("userId") ?? "");
   const accountNumber = String(formData.get("accountNumber") ?? "").trim() || null;
+  const tuntutan = String(formData.get("tuntutan") ?? "").trim() || null;
   if (!id) return { error: "Missing unit reference." };
 
   const unitNumberResult = unitNumberSchema.safeParse(formData.get("unitNumber"));
@@ -289,7 +280,6 @@ export async function updateOwnershipDocument(
     return { error: unitNumberResult.error.issues[0].message };
   }
   const unitNumber = unitNumberResult.data;
-  const unitType = parseUnitType(formData.get("unitType"));
 
   const existing = await prisma.ownershipDocument.findUnique({
     where: { id },
@@ -343,7 +333,7 @@ export async function updateOwnershipDocument(
       data: {
         accountNumber,
         unitNumber,
-        unitType,
+        tuntutan,
         ppjbDate,
         sppuNumber,
         sppuDate,

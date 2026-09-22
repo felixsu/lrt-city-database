@@ -120,7 +120,7 @@ export interface CSVConsumerRecord {
   loanTenorMonths: number | null;
   loanMonthsPaid: number | null;
   loanPaymentStatus: string;
-  demandType: string;
+  tuntutan: string;
   materialLossPaid: string;
   materialDetails: string;
   remainingArrears: string;
@@ -129,7 +129,6 @@ export interface CSVConsumerRecord {
   pinjamPakai: string;
   maxWaitDuration: string;
   compensation: string;
-  remarks?: string;
 }
 
 export function parseCSVConsumerRows(csvText: string): CSVConsumerRecord[] {
@@ -181,7 +180,7 @@ export function parseCSVConsumerRows(csvText: string): CSVConsumerRecord[] {
       "bulan dibayar"
     );
     const loanPaymentStatus = getVal(row, "status pembayaran kpa", "status pembayaran", "status kpa");
-    const demandType = getVal(row, "tuntutan", "demand type");
+    const tuntutan = getVal(row, "tuntutan", "demand type");
     const materialLossPaid = getVal(
       row,
       "kerugian materiil sesuai yang sudah dibayarkan",
@@ -210,7 +209,6 @@ export function parseCSVConsumerRows(csvText: string): CSVConsumerRecord[] {
     const pinjamPakai = getVal(row, "pinjam pakai");
     const maxWaitDuration = getVal(row, "maksimal bersedia menunggu selama", "bersedia menunggu selama");
     const compensation = getVal(row, "kompensasi");
-    const remarks = getVal(row, "remarks", "catatan", "keterangan");
     const timestamp = getVal(row, "timestamp");
 
     // Only skip completely blank rows
@@ -235,7 +233,7 @@ export function parseCSVConsumerRows(csvText: string): CSVConsumerRecord[] {
       loanTenorMonths,
       loanMonthsPaid,
       loanPaymentStatus,
-      demandType,
+      tuntutan,
       materialLossPaid,
       materialDetails,
       remainingArrears,
@@ -244,7 +242,6 @@ export function parseCSVConsumerRows(csvText: string): CSVConsumerRecord[] {
       pinjamPakai,
       maxWaitDuration,
       compensation,
-      remarks: remarks || undefined,
     });
   }
 

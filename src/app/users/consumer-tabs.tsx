@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import { ArrowDown, ArrowUp, ArrowUpDown, TriangleAlert } from "lucide-react";
 import { maskContactNumber, maskName } from "@/lib/mask";
-import { UNIT_TYPE_LABELS, type UnitType } from "@/lib/user-enums";
 import type { Prisma } from "@prisma/client";
 
 type DocumentWithRelations = Prisma.OwnershipDocumentGetPayload<{
@@ -123,7 +122,7 @@ export function ConsumerTabs({
         <p className="text-sm text-muted">No units match.</p>
       ) : (
         <div>
-          <div className="hidden border-b border-hairline pb-2.5 sm:grid sm:grid-cols-[0.9fr_0.6fr_0.9fr_0.9fr_1.1fr_0.9fr_1.1fr] sm:gap-4">
+          <div className="hidden border-b border-hairline pb-2.5 sm:grid sm:grid-cols-[0.9fr_0.6fr_0.9fr_1.1fr_0.9fr] sm:gap-4">
             <SortableHeader
               label="Name"
               column="name"
@@ -142,23 +141,17 @@ export function ConsumerTabs({
               Contact
             </div>
             <div className="font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
-              Unit type
-            </div>
-            <div className="font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
               PPJB No
             </div>
             <div className="font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
               SPPU No
-            </div>
-            <div className="font-mono text-[11px] tracking-[0.5px] text-muted uppercase">
-              Remarks
             </div>
           </div>
 
           {sortedDocuments.map((doc) => (
             <div
               key={doc.id}
-              className="grid grid-cols-1 gap-4 border-b border-hairline-soft py-4 sm:grid-cols-[0.9fr_0.6fr_0.9fr_0.9fr_1.1fr_0.9fr_1.1fr]"
+              className="grid grid-cols-1 gap-4 border-b border-hairline-soft py-4 sm:grid-cols-[0.9fr_0.6fr_0.9fr_1.1fr_0.9fr]"
             >
               <div>
                 <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase sm:hidden">
@@ -178,14 +171,6 @@ export function ConsumerTabs({
                 </div>
                 <div className="font-mono text-sm text-ink">
                   {maskContactNumber(doc.user.contactNumber)}
-                </div>
-              </div>
-              <div>
-                <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase sm:hidden">
-                  Unit type
-                </div>
-                <div className="font-mono text-sm text-ink">
-                  {doc.unitType ? UNIT_TYPE_LABELS[doc.unitType as UnitType] : "—"}
                 </div>
               </div>
               <div>
@@ -227,12 +212,6 @@ export function ConsumerTabs({
                     </span>
                   )}
                 </div>
-              </div>
-              <div>
-                <div className="mb-1 font-mono text-[11px] tracking-[0.5px] text-muted uppercase sm:hidden">
-                  Remarks
-                </div>
-                <div className="text-[13px] text-muted">{doc.user.remarks || "—"}</div>
               </div>
             </div>
           ))}

@@ -27,7 +27,6 @@ export function UserForm({
     loanBankId: string | null;
     paymentStatus: "IN_PROGRESS" | "PAID_OFF";
     paidOffDate: Date | null;
-    remarks: string | null;
   };
   hiddenId?: string;
   submitLabel: string;
