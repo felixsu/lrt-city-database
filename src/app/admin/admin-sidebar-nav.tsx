@@ -15,6 +15,7 @@ import {
   Shield,
   Settings,
   Upload,
+  ChartColumn,
 } from "lucide-react";
 
 export const ADMIN_SECTIONS = [
@@ -23,6 +24,7 @@ export const ADMIN_SECTIONS = [
   { segment: "leads", href: "/admin/leads", label: "Leads", icon: UserPlus },
   { segment: "users", href: "/admin/users", label: "Consumers", icon: Users },
   { segment: "import", href: "/admin/import", label: "Import CSV", icon: Upload },
+  { segment: "analytics", href: "/admin/analytics", label: "Analytics", icon: ChartColumn },
   { segment: "buildings", href: "/admin/buildings", label: "Buildings", icon: Building2 },
   { segment: "loan-banks", href: "/admin/loan-banks", label: "Loan banks", icon: Landmark },
   { segment: "timeline", href: "/admin/timeline", label: "Timeline", icon: Milestone },
