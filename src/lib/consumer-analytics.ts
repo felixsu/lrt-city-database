@@ -23,8 +23,9 @@ function demandCategory(value: string | null) {
 
 export function parseRupiah(value: string | null) {
   if (!value) return 0;
-  const cleaned = value.replace(/[^0-9,.-]/g, "");
-  if (!cleaned) return 0;
+  const source = value.trim();
+  if (!/^(?:rp\s*)?\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?$/i.test(source) && !/^\d+(?:\.\d{1,2})?$/.test(source)) return 0;
+  const cleaned = source.replace(/^rp\s*/i, "").replace(/,/g, "");
   const lastComma = cleaned.lastIndexOf(",");
   const lastDot = cleaned.lastIndexOf(".");
   const decimalIndex = Math.max(lastComma, lastDot);
@@ -33,6 +34,11 @@ export function parseRupiah(value: string | null) {
     ? `${cleaned.slice(0, decimalIndex).replace(/[.,-]/g, "")}.${cleaned.slice(decimalIndex + 1).replace(/[^0-9]/g, "")}`
     : cleaned.replace(/[.,-]/g, "");
   return Number.parseFloat(normalized) || 0;
+}
+
+export function normalizeCurrency(value: string) {
+  const parsed = parseRupiah(value);
+  return parsed > 0 || /^\s*0(?:[.,]0{1,2})?\s*$/.test(value) ? parsed.toFixed(2) : null;
 }
 
 export async function getProjectAnalytics(): Promise<ProjectAnalytics[]> {
