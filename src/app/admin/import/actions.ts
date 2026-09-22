@@ -1,328 +1,109 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { deleteImage } from "@/lib/cloudinary";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
-import {
-  parseCSVConsumerRows,
-  normalizeEmail,
-  normalizePhone,
-  normalizeUnitNumber,
-  type CSVConsumerRecord,
-} from "@/lib/csv-parser";
+import { parseCSVConsumerRows, normalizeEmail, normalizePhone, normalizeUnitNumber, type CSVConsumerRecord } from "@/lib/csv-parser";
 
-export type AnalysisRowStatus = "MATCHED_EXISTING" | "NEW";
+export type AnalysisRowStatus = "MATCHED_EXISTING" | "NEW" | "DUPLICATE_IN_CSV";
+export interface AnalyzedCSVRow { index: number; status: AnalysisRowStatus; statusReason: string; matchedUserId?: string; matchedUserName?: string; record: CSVConsumerRecord }
+export interface CSVAnalysisResult { totalRows: number; matchedCount: number; newCount: number; duplicateInCsvCount: number; rows: AnalyzedCSVRow[] }
 
-export interface AnalyzedCSVRow {
-  index: number;
-  status: AnalysisRowStatus;
-  statusReason: string;
-  matchedUserId?: string;
-  matchedUserName?: string;
-  record: CSVConsumerRecord;
+function key(r: CSVConsumerRecord) { return [normalizeEmail(r.email), normalizePhone(r.phone), normalizeUnitNumber(r.unitNumber)].join("|"); }
+function complete(r: CSVConsumerRecord) { return Boolean(normalizeEmail(r.email) && normalizePhone(r.phone) && normalizeUnitNumber(r.unitNumber)); }
+function buildingName(r: CSVConsumerRecord) { return [r.projectLocation.trim(), r.towerOrCluster.trim()].filter(Boolean).join(" — "); }
+function paymentStatus(r: CSVConsumerRecord): "IN_PROGRESS" | "PAID_OFF" { const status = r.loanPaymentStatus.toLowerCase(); return status.includes("lunas") && !status.includes("belum") ? "PAID_OFF" : "IN_PROGRESS"; }
+function parseTimestamp(value: string | undefined) { const result = value ? new Date(value) : null; return result && !Number.isNaN(result.getTime()) ? result : null; }
+function accountNumber(value: string) { const result = value.trim(); return result && result !== "-" && result !== "0" ? result : null; }
+
+async function existingKeys() {
+  const users = await prisma.user.findMany({ include: { ownershipDocuments: { select: { unitNumber: true } } } });
+  const results = new Map<string, { id: string; name: string }>();
+  for (const user of users) for (const document of user.ownershipDocuments) {
+    const email = normalizeEmail(user.email);
+    const phone = normalizePhone(user.contactNumber);
+    const unit = normalizeUnitNumber(document.unitNumber);
+    if (email && phone && unit) results.set([email, phone, unit].join("|"), { id: user.id, name: user.name });
+  }
+  return results;
 }
 
-export interface CSVAnalysisResult {
-  totalRows: number;
-  matchedCount: number;
-  newCount: number;
-  rows: AnalyzedCSVRow[];
-}
-
-export async function analyzeCSVAction(csvContent: string): Promise<{
-  success: boolean;
-  error?: string;
-  data?: CSVAnalysisResult;
-}> {
+export async function analyzeCSVAction(csvContent: string): Promise<{ success: boolean; error?: string; data?: CSVAnalysisResult }> {
   try {
     await requireAdmin();
-
-    if (!csvContent || csvContent.trim().length === 0) {
-      return { success: false, error: "CSV content is empty." };
-    }
-
     const records = parseCSVConsumerRows(csvContent);
-    if (records.length === 0) {
-      return { success: false, error: "No valid rows found in the CSV." };
-    }
-
-    // Fetch existing users and their ownership documents to match against
-    const existingUsers = await prisma.user.findMany({
-      include: {
-        ownershipDocuments: {
-          select: { id: true, unitNumber: true, sppuNumber: true, accountNumber: true },
-        },
-        building: { select: { id: true, name: true } },
-      },
+    if (!records.length) return { success: false, error: "No valid rows found in the CSV." };
+    const existing = await existingKeys();
+    const seen = new Set<string>();
+    const rows: AnalyzedCSVRow[] = records.map((record, index) => {
+      if (!complete(record)) return { index: index + 1, status: "DUPLICATE_IN_CSV", statusReason: "Email, phone, and unit are required.", record };
+      const recordKey = key(record);
+      if (seen.has(recordKey)) return { index: index + 1, status: "DUPLICATE_IN_CSV", statusReason: "Same email, phone, and unit already appears in this CSV.", record };
+      seen.add(recordKey);
+      const match = existing.get(recordKey);
+      return match
+        ? { index: index + 1, status: "MATCHED_EXISTING", statusReason: "Existing record has the same email, phone, and unit.", matchedUserId: match.id, matchedUserName: match.name, record }
+        : { index: index + 1, status: "NEW", statusReason: "New consumer record ready to import.", record };
     });
-
-    const analyzedRows: AnalyzedCSVRow[] = [];
-    let matchedCount = 0;
-    let newCount = 0;
-
-    for (let i = 0; i < records.length; i++) {
-      const rec = records[i];
-      const normEmail = normalizeEmail(rec.email);
-      const normPhone = normalizePhone(rec.phone);
-      const normUnit = normalizeUnitNumber(rec.unitNumber);
-
-      // Find if any existing user matches by phone, email, and unit number
-      // "the key is in the phone number, email, and unit number. If they are the same, then it is considered as same row and we should skip the import for those cases."
-      let matchedUser: (typeof existingUsers)[0] | undefined;
-      let matchedReason = "";
-
-      for (const u of existingUsers) {
-        const uPhone = normalizePhone(u.contactNumber);
-        const uEmail = normalizeEmail(u.email);
-
-        const phoneMatches = normPhone.length > 0 && uPhone.length > 0 && normPhone === uPhone;
-        const emailMatches = normEmail.length > 0 && uEmail.length > 0 && normEmail === uEmail;
-
-        // Check if any of the user's unit numbers match
-        const unitMatches = u.ownershipDocuments.some((doc) => {
-          const docUnit = normalizeUnitNumber(doc.unitNumber);
-          return normUnit.length > 0 && docUnit.length > 0 && docUnit === normUnit;
-        });
-
-        // Exact match rule: phone, email, AND unit number are all the same
-        if (phoneMatches && emailMatches && unitMatches) {
-          matchedUser = u;
-          matchedReason = `Existing record found: same email (${rec.email}), phone (${rec.phone}), and unit (${rec.unitNumber}) for ${u.name}`;
-          break;
-        }
-
-        // Also if unit and (phone or email) match exactly, flag it
-        if (unitMatches && (phoneMatches || emailMatches)) {
-          matchedUser = u;
-          matchedReason = `Existing record found: matching unit (${rec.unitNumber}) & ${phoneMatches ? "phone" : "email"} for ${u.name}`;
-          break;
-        }
-      }
-
-      if (matchedUser) {
-        matchedCount++;
-        analyzedRows.push({
-          index: i + 1,
-          status: "MATCHED_EXISTING",
-          statusReason: matchedReason,
-          matchedUserId: matchedUser.id,
-          matchedUserName: matchedUser.name,
-          record: rec,
-        });
-      } else {
-        newCount++;
-        analyzedRows.push({
-          index: i + 1,
-          status: "NEW",
-          statusReason: "New consumer / unit record ready to import",
-          record: rec,
-        });
-      }
-    }
-
-    return {
-      success: true,
-      data: {
-        totalRows: records.length,
-        matchedCount,
-        newCount,
-        rows: analyzedRows,
-      },
-    };
-  } catch (err: unknown) {
-    console.error("Failed to analyze CSV:", err);
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : "Failed to analyze CSV.",
-    };
+    return { success: true, data: { totalRows: records.length, matchedCount: rows.filter((r) => r.status === "MATCHED_EXISTING").length, newCount: rows.filter((r) => r.status === "NEW").length, duplicateInCsvCount: rows.filter((r) => r.status === "DUPLICATE_IN_CSV").length, rows } };
+  } catch (error) {
+    console.error("Failed to analyze CSV:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to analyze CSV." };
   }
 }
 
-export async function commitCSVImportAction(
-  rowsToImport: CSVConsumerRecord[]
-): Promise<{ success: boolean; importedCount?: number; error?: string }> {
+export async function replaceConsumerDataAndImportAction(rows: CSVConsumerRecord[], confirmation: string): Promise<{ success: boolean; importedCount?: number; warning?: string; error?: string }> {
   try {
     await requireAdmin();
-
-    if (!rowsToImport || rowsToImport.length === 0) {
-      return { success: false, error: "No rows selected for import." };
+    if (confirmation !== "REPLACE") return { success: false, error: 'Type "REPLACE" to confirm the reset.' };
+    if (!rows.length) return { success: false, error: "No rows selected for import." };
+    const seen = new Set<string>();
+    for (const row of rows) {
+      if (!complete(row)) return { success: false, error: "Every row needs an email, phone number, and unit number." };
+      const rowKey = key(row);
+      if (seen.has(rowKey)) return { success: false, error: "The selected rows contain a duplicate email, phone, and unit combination." };
+      seen.add(rowKey);
     }
 
-    // Pre-fetch buildings and loan banks to map or create
-    const allBuildings = await prisma.building.findMany();
-    const allLoanBanks = await prisma.loanBank.findMany();
+    const media = await prisma.ownershipDocument.findMany({ select: { sppuImagePublicId: true, photos: { select: { publicId: true } } } });
+    const mediaIds = media.flatMap((document) => [...(document.sppuImagePublicId ? [document.sppuImagePublicId] : []), ...document.photos.map((photo) => photo.publicId)]);
+    const deleteResults = await Promise.allSettled(mediaIds.map((id) => deleteImage(id)));
+    const failedDeletes = deleteResults.filter((result) => result.status === "rejected").length;
 
-    const buildingMap = new Map<string, string>(); // lowercase name -> id
-    allBuildings.forEach((b) => buildingMap.set(b.name.toLowerCase().trim(), b.id));
+    await prisma.$transaction(async (tx) => {
+      await tx.lead.updateMany({ data: { buildingId: null, convertedUserId: null, convertedAt: null, status: "NEW" } });
+      await tx.ownershipDocumentPhoto.deleteMany();
+      await tx.ownershipDocument.deleteMany();
+      await tx.user.deleteMany();
+      await tx.loanBank.deleteMany();
+      await tx.building.deleteMany();
 
-    const bankMap = new Map<string, string>(); // lowercase name -> id
-    allLoanBanks.forEach((b) => bankMap.set(b.name.toLowerCase().trim(), b.id));
-
-    let importedCount = 0;
-
-    for (const rec of rowsToImport) {
-      // 1. Match or create Building
-      let buildingId: string | null = null;
-      const buildingName = rec.projectLocation.trim();
-      if (buildingName) {
-        const key = buildingName.toLowerCase();
-        if (buildingMap.has(key)) {
-          buildingId = buildingMap.get(key)!;
-        } else {
-          // Attempt fuzzy match or create building
-          try {
-            const newBld = await prisma.building.create({
-              data: { name: buildingName },
-            });
-            buildingId = newBld.id;
-            buildingMap.set(key, newBld.id);
-          } catch {
-            const existing = await prisma.building.findFirst({
-              where: { name: { equals: buildingName, mode: "insensitive" } },
-            });
-            if (existing) {
-              buildingId = existing.id;
-              buildingMap.set(key, existing.id);
-            }
-          }
+      const buildings = new Map<string, string>();
+      const banks = new Map<string, string>();
+      for (const row of rows) {
+        const buildingLabel = buildingName(row);
+        let buildingId: string | null = null;
+        if (buildingLabel) {
+          const buildingKey = buildingLabel.toLocaleLowerCase();
+          buildingId = buildings.get(buildingKey) ?? (await tx.building.create({ data: { name: buildingLabel } })).id;
+          buildings.set(buildingKey, buildingId);
         }
-      }
-
-      // 2. Match or create LoanBank
-      let loanBankId: string | null = null;
-      const bankName = rec.loanBankName.trim();
-      if (bankName) {
-        const key = bankName.toLowerCase();
-        if (bankMap.has(key)) {
-          loanBankId = bankMap.get(key)!;
-        } else {
-          try {
-            const newBank = await prisma.loanBank.create({
-              data: { name: bankName },
-            });
-            loanBankId = newBank.id;
-            bankMap.set(key, newBank.id);
-          } catch {
-            const existing = await prisma.loanBank.findFirst({
-              where: { name: { equals: bankName, mode: "insensitive" } },
-            });
-            if (existing) {
-              loanBankId = existing.id;
-              bankMap.set(key, existing.id);
-            }
-          }
+        const bankLabel = row.loanBankName.trim();
+        let loanBankId: string | null = null;
+        if (bankLabel) {
+          const bankKey = bankLabel.toLocaleLowerCase();
+          loanBankId = banks.get(bankKey) ?? (await tx.loanBank.create({ data: { name: bankLabel } })).id;
+          banks.set(bankKey, loanBankId);
         }
+        const user = await tx.user.create({ data: { name: row.name, email: normalizeEmail(row.email), contactNumber: row.phone.trim(), buildingId, loanBankId, paymentStatus: paymentStatus(row), remarks: row.remarks ?? (row.materialDetails || null) } });
+        await tx.ownershipDocument.create({ data: { userId: user.id, unitNumber: row.unitNumber.trim(), accountNumber: accountNumber(row.ppjbNumber), sppuNumber: row.sppuNumber.trim() || null, purchasePrice: row.purchasePrice || null, paymentType: row.paymentType || null, loanBankName: row.loanBankName || null, loanTenorMonths: row.loanTenorMonths, loanMonthsPaid: row.loanMonthsPaid, loanPaymentStatus: row.loanPaymentStatus || null, demandType: row.demandType || null, materialLossPaid: row.materialLossPaid || null, materialDetails: row.materialDetails || null, remainingArrears: row.remainingArrears || null, otherLosses: row.otherLosses || null, lossBasisCalc: row.lossBasisCalc || null, pinjamPakai: row.pinjamPakai || null, maxWaitDuration: row.maxWaitDuration || null, compensation: row.compensation || null, surveyTimestamp: parseTimestamp(row.timestamp) } });
       }
-
-      // 3. Determine PaymentStatus enum
-      // If loanPaymentStatus says "Sudah Lunas", mark as PAID_OFF
-      let paymentStatus: "IN_PROGRESS" | "PAID_OFF" = "IN_PROGRESS";
-      if (
-        rec.loanPaymentStatus.toLowerCase().includes("lunas") &&
-        !rec.loanPaymentStatus.toLowerCase().includes("belum")
-      ) {
-        paymentStatus = "PAID_OFF";
-      }
-
-      // Check if user already exists with matching phone & email
-      const normEmail = normalizeEmail(rec.email);
-
-      let user = await prisma.user.findFirst({
-        where: {
-          OR: [
-            { contactNumber: rec.phone },
-            ...(normEmail ? [{ email: { equals: normEmail, mode: "insensitive" as const } }] : []),
-          ],
-        },
-      });
-
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            name: rec.name || "Unnamed Consumer",
-            email: rec.email || null,
-            contactNumber: rec.phone || "-",
-            buildingId,
-            loanBankId,
-            paymentStatus,
-            remarks: rec.remarks || rec.materialDetails || null,
-          },
-        });
-      } else {
-        // Update user's email or building if missing
-        await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            email: user.email || rec.email || null,
-            buildingId: user.buildingId || buildingId,
-            loanBankId: user.loanBankId || loanBankId,
-          },
-        });
-      }
-
-      // 4. Create OwnershipDocument with all new survey columns
-      let surveyTimestamp: Date | null = null;
-      if (rec.timestamp) {
-        const parsed = new Date(rec.timestamp);
-        if (!isNaN(parsed.getTime())) {
-          surveyTimestamp = parsed;
-        }
-      }
-
-      // Verify if accountNumber (PPJB) is unique before assigning
-      let accountNumber = rec.ppjbNumber.trim() || null;
-      if (accountNumber === "-" || accountNumber === "0" || accountNumber === "") {
-        accountNumber = null;
-      }
-
-      if (accountNumber) {
-        const existingDoc = await prisma.ownershipDocument.findUnique({
-          where: { accountNumber },
-        });
-        if (existingDoc) {
-          // append user/unit id to keep unique if duplicate in source
-          accountNumber = `${accountNumber} (${rec.unitNumber || "dup"})`;
-        }
-      }
-
-      await prisma.ownershipDocument.create({
-        data: {
-          userId: user.id,
-          unitNumber: rec.unitNumber || null,
-          accountNumber,
-          sppuNumber: rec.sppuNumber || null,
-          purchasePrice: rec.purchasePrice || null,
-          paymentType: rec.paymentType || null,
-          loanBankName: rec.loanBankName || null,
-          loanTenorMonths: rec.loanTenorMonths,
-          loanMonthsPaid: rec.loanMonthsPaid,
-          loanPaymentStatus: rec.loanPaymentStatus || null,
-          demandType: rec.demandType || null,
-          materialLossPaid: rec.materialLossPaid || null,
-          materialDetails: rec.materialDetails || null,
-          remainingArrears: rec.remainingArrears || null,
-          otherLosses: rec.otherLosses || null,
-          lossBasisCalc: rec.lossBasisCalc || null,
-          pinjamPakai: rec.pinjamPakai || null,
-          maxWaitDuration: rec.maxWaitDuration || null,
-          compensation: rec.compensation || null,
-          surveyTimestamp,
-        },
-      });
-
-      importedCount++;
-    }
-
-    revalidatePath("/admin/users");
-    revalidatePath("/admin/import");
-    revalidatePath("/users");
-
-    return { success: true, importedCount };
-  } catch (err: unknown) {
-    console.error("Failed to commit CSV import:", err);
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : "Failed to commit import.",
-    };
+    });
+    revalidatePath("/admin/users"); revalidatePath("/admin/import"); revalidatePath("/users");
+    return { success: true, importedCount: rows.length, warning: failedDeletes ? `${failedDeletes} Cloudinary asset(s) could not be removed and may need manual cleanup.` : undefined };
+  } catch (error) {
+    console.error("Failed to replace consumer data:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to replace consumer data." };
   }
 }

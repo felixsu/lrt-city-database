@@ -21,6 +21,7 @@ export function UserForm({
   loanBanks: LoanBank[];
   defaultValues?: {
     name: string;
+    email?: string | null;
     contactNumber: string;
     buildingId: string | null;
     loanBankId: string | null;
