@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useActionState } from "react";
 import { TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { UNIT_TYPES, UNIT_TYPE_LABELS } from "@/lib/user-enums";
 import type { UserFormState } from "../actions";
 
 type OwnershipDocumentAction = (
@@ -29,6 +28,15 @@ function MissingBadge() {
   );
 }
 
+function SurveyValue({ label, value }: { label: string; value: string | null | undefined }) {
+  return (
+    <div>
+      <span className="text-muted block text-[11px]">{label}</span>
+      <span className="text-ink">{value || "—"}</span>
+    </div>
+  );
+}
+
 export function OwnershipDocumentCard({
   document,
   userId,
@@ -41,7 +49,6 @@ export function OwnershipDocumentCard({
     id: string;
     accountNumber: string | null;
     unitNumber: string | null;
-    unitType: string | null;
     ppjbDate: Date | null;
     sppuNumber: string | null;
     sppuDate: Date | null;
@@ -52,7 +59,7 @@ export function OwnershipDocumentCard({
     loanTenorMonths?: number | null;
     loanMonthsPaid?: number | null;
     loanPaymentStatus?: string | null;
-    demandType?: string | null;
+    tuntutan?: string | null;
     materialLossPaid?: string | null;
     materialDetails?: string | null;
     remainingArrears?: string | null;
@@ -100,19 +107,13 @@ export function OwnershipDocumentCard({
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-muted">Unit type</label>
-            <select
-              name="unitType"
-              defaultValue={document.unitType ?? ""}
-              className={`${fieldInputClass} w-32`}
-            >
-              <option value="">Unspecified</option>
-              {UNIT_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {UNIT_TYPE_LABELS[type]}
-                </option>
-              ))}
-            </select>
+            <label className="text-xs font-medium text-muted">Tuntutan</label>
+            <input
+              type="text"
+              name="tuntutan"
+              defaultValue={document.tuntutan ?? ""}
+              className={`${fieldInputClass} w-52`}
+            />
           </div>
           <div>
             <label className="text-xs font-medium text-muted">
@@ -162,7 +163,7 @@ export function OwnershipDocumentCard({
         {/* Survey & Integrated Financial Details */}
         {(document.purchasePrice ||
           document.paymentType ||
-          document.demandType ||
+          document.tuntutan ||
           document.materialLossPaid ||
           document.remainingArrears ||
           document.materialDetails) && (
@@ -176,37 +177,20 @@ export function OwnershipDocumentCard({
                 <span className="font-medium text-ink">{document.purchasePrice || "—"}</span>
               </div>
               <div>
-                <span className="text-muted block text-[11px]">Payment Method</span>
-                <span className="text-ink">{document.paymentType || "—"}</span>
-              </div>
-              <div>
-                <span className="text-muted block text-[11px]">Loan Bank</span>
-                <span className="text-ink">{document.loanBankName || "—"}</span>
-              </div>
-              <div>
-                <span className="text-muted block text-[11px]">Tenor / Months Paid</span>
-                <span className="text-ink">
-                  {document.loanTenorMonths ? `${document.loanTenorMonths} bln` : "—"} /{" "}
-                  {document.loanMonthsPaid ? `${document.loanMonthsPaid} paid` : "—"}
-                </span>
-              </div>
-              <div>
-                <span className="text-muted block text-[11px]">KPA Status</span>
-                <span className="text-ink">{document.loanPaymentStatus || "—"}</span>
-              </div>
-              <div>
-                <span className="text-muted block text-[11px]">Demand Type</span>
-                <span className="font-semibold text-accent">{document.demandType || "—"}</span>
-              </div>
-              <div>
-                <span className="text-muted block text-[11px]">Material Loss Paid</span>
-                <span className="font-medium text-red-600">{document.materialLossPaid || "—"}</span>
-              </div>
-              <div>
-                <span className="text-muted block text-[11px]">Remaining Arrears</span>
-                <span className="text-ink">{document.remainingArrears || "—"}</span>
+                <span className="text-muted block text-[11px]">Tuntutan</span>
+                <span className="font-semibold text-accent">{document.tuntutan || "—"}</span>
               </div>
             </div>
+
+            {document.tuntutan?.trim().toLowerCase() === "refund" && (
+              <div className="grid grid-cols-1 gap-2 border-t border-hairline pt-2 sm:grid-cols-2">
+                <SurveyValue label="Jenis Pembayaran" value={document.paymentType} />
+                <SurveyValue label="Bank" value={document.loanBankName} />
+                <SurveyValue label="Status Pembayaran KPA" value={document.loanPaymentStatus} />
+                <SurveyValue label="Kerugian Materiil yang Sudah Dibayarkan" value={document.materialLossPaid} />
+                <SurveyValue label="Kerugian Materiil dan Imateriil Lainnya" value={document.otherLosses} />
+              </div>
+            )}
 
             {document.materialDetails && (
               <div className="border-t border-hairline pt-2">
@@ -325,19 +309,13 @@ export function CreateOwnershipDocumentForm({
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-ink">Unit type</label>
-          <select
-            name="unitType"
-            defaultValue=""
-            className="mt-1 w-32 rounded-lg border border-hairline bg-surface px-3 py-2 text-sm"
-          >
-            <option value="">Unspecified</option>
-            {UNIT_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {UNIT_TYPE_LABELS[type]}
-              </option>
-            ))}
-          </select>
+          <label className="text-sm font-medium text-ink">Tuntutan</label>
+          <input
+            type="text"
+            name="tuntutan"
+            placeholder="e.g. Refund"
+            className="mt-1 w-52 rounded-lg border border-hairline bg-surface px-3 py-2 text-sm"
+          />
         </div>
         <div>
           <label className="text-sm font-medium text-ink">PPJB number (optional)</label>

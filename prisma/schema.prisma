@@ -54,7 +54,6 @@ model User {
   name               String
   email              String?
   contactNumber      String
-  remarks            String?
   loanBankId         String?
   loanBank           LoanBank?     @relation(fields: [loanBankId], references: [id])
   paymentStatus      PaymentStatus @default(IN_PROGRESS)
@@ -71,7 +70,6 @@ model OwnershipDocument {
   id                String   @id @default(cuid())
   accountNumber     String?
   unitNumber        String?
-  unitType          String?
   ppjbDate          DateTime?
   sppuNumber        String?
   sppuDate          DateTime?
@@ -83,7 +81,7 @@ model OwnershipDocument {
   loanTenorMonths   Int?
   loanMonthsPaid    Int?
   loanPaymentStatus String?
-  demandType        String?
+  tuntutan          String?
   materialLossPaid  String?
   materialDetails   String?
   remainingArrears  String?
