@@ -2,12 +2,13 @@ import { prisma } from "@/lib/prisma";
 
 export type ProjectAnalytics = {
   project: string;
+  consumers: number;
   units: number;
   refund: number;
   waiting: number;
   other: number;
   materialLossPaid: number;
-  otherLosses: number;
+  contractValue: number;
 };
 
 function projectLocation(buildingName: string | null | undefined) {
@@ -46,22 +47,25 @@ export async function getProjectAnalytics(): Promise<ProjectAnalytics[]> {
     select: {
       tuntutan: true,
       materialLossPaid: true,
-      otherLosses: true,
-      user: { select: { building: { select: { name: true } } } },
+      contractValue: true,
+      user: { select: { id: true, building: { select: { name: true } } } },
     },
   });
-  const projects = new Map<string, ProjectAnalytics>();
+  const projects = new Map<string, ProjectAnalytics & { consumerIds: Set<string> }>();
   for (const document of documents) {
     const project = projectLocation(document.user.building?.name);
-    const row = projects.get(project) ?? { project, units: 0, refund: 0, waiting: 0, other: 0, materialLossPaid: 0, otherLosses: 0 };
+    const row = projects.get(project) ?? { project, consumers: 0, units: 0, refund: 0, waiting: 0, other: 0, materialLossPaid: 0, contractValue: 0, consumerIds: new Set<string>() };
     row.units += 1;
+    row.consumerIds.add(document.user.id);
+    row.contractValue += parseRupiah(document.contractValue);
     const demand = demandCategory(document.tuntutan);
     row[demand] += 1;
     if (demand === "refund") {
       row.materialLossPaid += parseRupiah(document.materialLossPaid);
-      row.otherLosses += parseRupiah(document.otherLosses);
     }
     projects.set(project, row);
   }
-  return [...projects.values()].sort((a, b) => b.units - a.units || a.project.localeCompare(b.project));
+  return [...projects.values()]
+    .map(({ consumerIds, ...row }) => ({ ...row, consumers: consumerIds.size }))
+    .sort((a, b) => b.units - a.units || a.project.localeCompare(b.project));
 }
