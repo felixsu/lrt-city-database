@@ -7,6 +7,10 @@ export type ProjectAnalytics = {
   refund: number;
   waiting: number;
   other: number;
+  paymentStopped: number;
+  paymentActive: number;
+  paymentPaidOff: number;
+  paymentOther: number;
   materialLossPaid: number;
   contractValue: number;
 };
@@ -20,6 +24,14 @@ function demandCategory(value: string | null) {
   if (normalized === "refund") return "refund";
   if (normalized === "menunggu pembangunan selesai") return "waiting";
   return "other";
+}
+
+function paymentCategory(value: string | null) {
+  const normalized = value?.trim().toLowerCase();
+  if (normalized === "belum lunas, sudah tidak membayar") return "paymentStopped";
+  if (normalized === "belum lunas, masih aktif membayar") return "paymentActive";
+  if (normalized === "sudah lunas") return "paymentPaidOff";
+  return "paymentOther";
 }
 
 export function parseRupiah(value: string | null) {
@@ -46,6 +58,7 @@ export async function getProjectAnalytics(): Promise<ProjectAnalytics[]> {
   const documents = await prisma.ownershipDocument.findMany({
     select: {
       tuntutan: true,
+      loanPaymentStatus: true,
       materialLossPaid: true,
       contractValue: true,
       user: { select: { id: true, building: { select: { name: true } } } },
@@ -54,12 +67,28 @@ export async function getProjectAnalytics(): Promise<ProjectAnalytics[]> {
   const projects = new Map<string, ProjectAnalytics & { consumerIds: Set<string> }>();
   for (const document of documents) {
     const project = projectLocation(document.user.building?.name);
-    const row = projects.get(project) ?? { project, consumers: 0, units: 0, refund: 0, waiting: 0, other: 0, materialLossPaid: 0, contractValue: 0, consumerIds: new Set<string>() };
+    const row = projects.get(project) ?? {
+      project,
+      consumers: 0,
+      units: 0,
+      refund: 0,
+      waiting: 0,
+      other: 0,
+      paymentStopped: 0,
+      paymentActive: 0,
+      paymentPaidOff: 0,
+      paymentOther: 0,
+      materialLossPaid: 0,
+      contractValue: 0,
+      consumerIds: new Set<string>(),
+    };
     row.units += 1;
     row.consumerIds.add(document.user.id);
     row.contractValue += parseRupiah(document.contractValue);
     const demand = demandCategory(document.tuntutan);
     row[demand] += 1;
+    const payment = paymentCategory(document.loanPaymentStatus);
+    row[payment] += 1;
     if (demand === "refund") {
       row.materialLossPaid += parseRupiah(document.materialLossPaid);
     }

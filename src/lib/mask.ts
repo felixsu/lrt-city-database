@@ -28,3 +28,10 @@ export function maskContactNumber(contact: string): string {
   const last = trimmed.slice(-4);
   return `${first}${MASK_CHAR.repeat(trimmed.length - 8)}${last}`;
 }
+
+/** Shows only the first and last two characters of a document number. */
+export function maskDocumentNumber(documentNumber: string): string {
+  const trimmed = documentNumber.trim();
+  if (trimmed.length <= 4) return MASK_CHAR.repeat(trimmed.length);
+  return `${trimmed.slice(0, 2)}${MASK_CHAR.repeat(trimmed.length - 4)}${trimmed.slice(-2)}`;
+}
