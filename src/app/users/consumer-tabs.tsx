@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { ArrowDown, ArrowUp, ArrowUpDown, TriangleAlert } from "lucide-react";
-import { maskContactNumber, maskName } from "@/lib/mask";
+import { maskContactNumber, maskDocumentNumber, maskName } from "@/lib/mask";
 import type { Prisma } from "@prisma/client";
 
 type DocumentWithRelations = Prisma.OwnershipDocumentGetPayload<{
@@ -180,7 +180,7 @@ export function ConsumerTabs({
                 <div className="flex flex-wrap items-center gap-1.5">
                   {doc.accountNumber ? (
                     <span className="rounded-md border border-hairline bg-surface-soft px-2 py-0.5 font-mono text-xs text-ink">
-                      {doc.accountNumber}
+                      {maskDocumentNumber(doc.accountNumber)}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] text-accent-strong">
@@ -204,7 +204,7 @@ export function ConsumerTabs({
                 <div className="flex flex-wrap items-center gap-1.5">
                   {doc.sppuNumber ? (
                     <span className="rounded-md border border-hairline bg-surface-soft px-2 py-0.5 font-mono text-xs text-ink">
-                      {doc.sppuNumber}
+                      {maskDocumentNumber(doc.sppuNumber)}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] text-accent-strong">
