@@ -114,7 +114,7 @@ export interface CSVConsumerRecord {
   projectLocation: string;
   towerOrCluster: string;
   unitNumber: string;
-  purchasePrice: string;
+  contractValue: string;
   paymentType: string;
   loanBankName: string;
   loanTenorMonths: number | null;
@@ -162,7 +162,14 @@ export function parseCSVConsumerRows(csvText: string): CSVConsumerRecord[] {
     const projectLocation = getVal(row, "lokasi proyek", "proyek", "project");
     const towerOrCluster = getVal(row, "tower atau cluster", "tower", "cluster", "tower/cluster");
     const unitNumber = getVal(row, "unit", "unit number", "nomor unit");
-    const purchasePrice = getVal(row, "harga pembelian unit sesuai sppu/ppjb/sskk", "harga pembelian unit", "harga unit", "purchase price");
+    const contractValue = getVal(
+      row,
+      "nilai kontrak unit",
+      "harga pembelian unit sesuai sppu/ppjb/sskk",
+      "harga pembelian unit",
+      "harga unit",
+      "purchase price",
+    );
     const paymentType = getVal(row, "jenis pembayaran", "payment type");
     const loanBankName = getVal(
       row,
@@ -227,7 +234,7 @@ export function parseCSVConsumerRows(csvText: string): CSVConsumerRecord[] {
       projectLocation,
       towerOrCluster,
       unitNumber,
-      purchasePrice,
+      contractValue,
       paymentType,
       loanBankName,
       loanTenorMonths,
