@@ -129,6 +129,7 @@ export interface CSVConsumerRecord {
   pinjamPakai: string;
   maxWaitDuration: string;
   compensation: string;
+  remarks?: string;
 }
 
 export function parseCSVConsumerRows(csvText: string): CSVConsumerRecord[] {
@@ -209,6 +210,7 @@ export function parseCSVConsumerRows(csvText: string): CSVConsumerRecord[] {
     const pinjamPakai = getVal(row, "pinjam pakai");
     const maxWaitDuration = getVal(row, "maksimal bersedia menunggu selama", "bersedia menunggu selama");
     const compensation = getVal(row, "kompensasi");
+    const remarks = getVal(row, "remarks", "catatan", "keterangan");
     const timestamp = getVal(row, "timestamp");
 
     // Only skip completely blank rows
@@ -242,6 +244,7 @@ export function parseCSVConsumerRows(csvText: string): CSVConsumerRecord[] {
       pinjamPakai,
       maxWaitDuration,
       compensation,
+      remarks: remarks || undefined,
     });
   }
 

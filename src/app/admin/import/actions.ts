@@ -245,7 +245,7 @@ export async function commitCSVImportAction(
             buildingId,
             loanBankId,
             paymentStatus,
-            remarks: rec.materialDetails || rec.remarks || null,
+            remarks: rec.remarks || rec.materialDetails || null,
           },
         });
       } else {
