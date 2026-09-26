@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import Image from "next/image";
 import { ArrowDown, ArrowUp, ArrowUpDown, TriangleAlert } from "lucide-react";
 import { maskContactNumber, maskDocumentNumber, maskName } from "@/lib/mask";
@@ -59,7 +59,14 @@ export function ConsumerTabs({
   const [activeKey, setActiveKey] = useState(initialKey);
   const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const tabListRef = useRef<HTMLDivElement>(null);
   const activeGroup = groups.find((g) => g.key === activeKey) ?? groups[0];
+  const activeIndex = groups.findIndex((group) => group.key === activeGroup?.key);
+
+  useEffect(() => {
+    tabListRef.current?.querySelector<HTMLButtonElement>('[aria-selected="true"]')
+      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [activeGroup?.key]);
 
   const sortedDocuments = useMemo(() => {
     if (!activeGroup || !sortColumn) return activeGroup?.documents ?? [];
@@ -83,6 +90,21 @@ export function ConsumerTabs({
     }
   }
 
+  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    let nextIndex: number;
+    if (event.key === "ArrowRight") nextIndex = (index + 1) % groups.length;
+    else if (event.key === "ArrowLeft") nextIndex = (index - 1 + groups.length) % groups.length;
+    else if (event.key === "Home") nextIndex = 0;
+    else if (event.key === "End") nextIndex = groups.length - 1;
+    else return;
+
+    event.preventDefault();
+    setActiveKey(groups[nextIndex].key);
+    const nextTab = tabListRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[nextIndex];
+    nextTab?.focus();
+    nextTab?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+
   const registeredUsers = useMemo(
     () => new Set(activeGroup?.documents.map((doc) => doc.user.id)).size,
     [activeGroup],
@@ -90,26 +112,35 @@ export function ConsumerTabs({
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap gap-2 border-b border-hairline">
-        {groups.map((group) => (
-          <button
-            key={group.key}
-            type="button"
-            onClick={() => setActiveKey(group.key)}
-            className={`-mb-px flex items-center gap-2 border-b-2 px-3.5 py-2.5 text-sm font-medium transition-colors ${
-              group.key === activeGroup?.key
-                ? "border-accent text-ink"
-                : "border-transparent text-muted hover:text-ink"
-            }`}
-          >
-            {group.name}
-            <span className="rounded-full bg-surface-soft px-1.5 py-0.5 font-mono text-[11px] text-muted">
-              {group.documents.length}
-            </span>
-          </button>
-        ))}
+      <div className="mb-6 max-w-full overflow-x-auto overscroll-x-contain border-b border-hairline">
+        <div ref={tabListRef} role="tablist" aria-label="Project locations" className="flex w-max min-w-full flex-nowrap gap-2">
+          {groups.map((group, index) => (
+            <button
+              key={group.key}
+              type="button"
+              id={`consumer-project-tab-${index}`}
+              role="tab"
+              aria-selected={group.key === activeGroup?.key}
+              aria-controls="consumer-project-panel"
+              tabIndex={group.key === activeGroup?.key ? 0 : -1}
+              onClick={() => setActiveKey(group.key)}
+              onKeyDown={(event) => handleTabKeyDown(event, index)}
+              className={`-mb-px flex shrink-0 items-center gap-2 whitespace-nowrap rounded-t-lg border border-b-2 px-4 py-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                group.key === activeGroup?.key
+                  ? "border-accent bg-accent/10 text-accent-strong"
+                  : "border-transparent text-muted hover:border-hairline hover:bg-surface-soft hover:text-ink"
+              }`}
+            >
+              {group.name}
+              <span className="rounded-full bg-surface-soft px-1.5 py-0.5 font-mono text-[11px] text-muted">
+                {group.documents.length}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
+      <div id="consumer-project-panel" role="tabpanel" aria-labelledby={activeIndex >= 0 ? `consumer-project-tab-${activeIndex}` : undefined} tabIndex={0}>
       {activeGroup && (
         <div className="mb-6 font-mono text-xs text-muted">
           Total units: {activeGroup.totalUnits ?? "—"} · Registered with us:{" "}
@@ -217,6 +248,7 @@ export function ConsumerTabs({
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }
