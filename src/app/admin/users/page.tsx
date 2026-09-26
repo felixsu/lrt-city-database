@@ -4,11 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { LinkButton } from "@/components/ui/button";
 import { PAYMENT_STATUS_LABELS } from "@/lib/user-enums";
+import { summarizeConsumers } from "@/lib/consumer-totals";
 
 type SortColumn = "name" | "contact" | "unit";
 type SortDir = "asc" | "desc";
 
 const SORT_COLUMNS: readonly SortColumn[] = ["name", "contact", "unit"];
+const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 
 function formatDate(date: Date | null) {
   if (!date) return "—";
@@ -96,7 +98,15 @@ export default async function AdminUsersPage({
         building: true,
         loanBank: true,
         ownershipDocuments: {
-          select: { id: true, unitNumber: true, accountNumber: true, sppuNumber: true },
+          select: {
+            id: true,
+            unitNumber: true,
+            accountNumber: true,
+            sppuNumber: true,
+            tuntutan: true,
+            materialLossPaid: true,
+            contractValue: true,
+          },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -110,6 +120,7 @@ export default async function AdminUsersPage({
       compareValues(a.unitNumber, b.unitNumber, "asc"),
     ),
   }));
+  const totals = summarizeConsumers(rows);
 
   if (sortColumn) {
     rows.sort((a, b) => {
@@ -178,6 +189,13 @@ export default async function AdminUsersPage({
           Filter
         </button>
       </form>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Filtered consumer totals">
+        <SummaryCard label="Total consumers" value={totals.consumers.toLocaleString("id-ID")} />
+        <SummaryCard label="Total units" value={totals.units.toLocaleString("id-ID")} />
+        <SummaryCard label="Total kerugian materiil" value={rupiah.format(totals.materialLossPaid)} />
+        <SummaryCard label="Total nilai proyek" value={rupiah.format(totals.contractValue)} />
+      </div>
 
       <div className="overflow-x-auto rounded-xl border border-hairline bg-surface">
         <table className="w-full text-left text-sm">
@@ -297,6 +315,15 @@ export default async function AdminUsersPage({
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function SummaryCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-xl border border-hairline bg-surface p-5">
+      <p className="font-mono text-[11px] tracking-[0.5px] text-muted uppercase">{label}</p>
+      <p className="mt-2 break-words text-xl font-medium text-ink">{value}</p>
     </div>
   );
 }
